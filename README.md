@@ -100,8 +100,8 @@ approval prompts. What is gated:
 
 | | |
 |---|---|
-| `ask` | `git push`, `git reset`, `git rebase`, `git merge`, `rm -r`, `docker push`, `terraform apply`, `kubectl apply`, paths outside the project, repeated identical calls, edits to `AGENTS.md` / `opencode.json` / `.opencode/**` |
-| `deny` | force-push, remote-ref deletion, `git reset --hard`, `git clean`, `rm -rf`, `sudo`, publish, `gh pr create` / `gh pr merge` / `gh release create`, `terraform destroy`, `kubectl delete`, reading or editing `.env` files |
+| `ask` | `git push`, `git reset`, `git rebase`, `git merge`, `rm -r`, `docker push`, `gh pr create` (strict profile: deny), `terraform apply`, `kubectl apply`, paths outside the project, repeated identical calls, edits to `AGENTS.md` / `opencode.json` / `.opencode/**` |
+| `deny` | force-push, remote-ref deletion, `git reset --hard`, `git clean`, `rm -rf`, `sudo`, publish, `gh pr merge` / `gh release create`, `terraform destroy`, `kubectl delete`, reading or editing `.env` files |
 
 OpenCode permission maps are **last-match-wins over key order**, so the rules
 are built as an ordered list: broad allows first, specific safeguards after.

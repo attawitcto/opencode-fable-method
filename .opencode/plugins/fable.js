@@ -25,7 +25,7 @@ const prompt = (name) => fs.readFileSync(path.join(PKG, 'prompts', `${name}.md`)
  * written as ordered pairs: broad allows first, specific safeguards after.
  * Never build one of these with a bare object spread of unordered sources.
  */
-const bashRules = ({ commit }) => [
+const bashRules = ({ commit, strict }) => [
   ['*', 'allow'],
 
   ['git commit*', commit],
@@ -71,7 +71,8 @@ const bashRules = ({ commit }) => [
   ['twine upload*', 'deny'],
   ['docker push*', 'ask'],
 
-  ['gh pr create*', 'deny'],
+  // ponytail: PRs are closable; only the strict profile hard-denies them.
+  ['gh pr create*', strict ? 'deny' : 'ask'],
   ['gh pr merge*', 'deny'],
   ['gh release create*', 'deny'],
   ['gh repo delete*', 'deny'],
@@ -171,7 +172,8 @@ const toMap = (pairs) => Object.fromEntries(pairs)
  * never end up more permissive than the primary agent. Derived rather than
  * copied: a new deny added above is picked up here automatically.
  */
-const HARD_DENIES = bashRules({ commit: 'allow' }).filter(([, action]) => action === 'deny')
+// strict: true so a read-only subagent keeps the deny regardless of profile.
+const HARD_DENIES = bashRules({ commit: 'allow', strict: true }).filter(([, action]) => action === 'deny')
 
 /**
  * Shell map for an agent that must not act. Order matters: the catch-all, then
@@ -180,7 +182,7 @@ const HARD_DENIES = bashRules({ commit: 'allow' }).filter(([, action]) => action
 const readOnlyBash = (fallback) =>
   toMap([['*', fallback], ...INSPECT_RULES, ...INSPECT_DENIES, ...HARD_DENIES])
 
-const projectPermission = ({ commit }) => ({
+const projectPermission = ({ commit, strict }) => ({
   '*': 'allow',
   read: {
     '*': 'allow',
@@ -200,7 +202,7 @@ const projectPermission = ({ commit }) => ({
   },
   external_directory: 'ask',
   doom_loop: 'ask',
-  bash: toMap(bashRules({ commit })),
+  bash: toMap(bashRules({ commit, strict })),
 })
 
 /**
@@ -342,10 +344,11 @@ const PROBES = [
   'rm -rf build',
   'sudo ls',
   'npm publish',
+  'gh pr create --fill',
 ]
 
 const doctor = (state) => {
-  const { config, injected, commit } = state
+  const { config, injected, commit, strict } = state
   if (!config) return 'fable-doctor: the config hook has not run yet — restart OpenCode.'
 
   const agents = ['fable', 'evidence', 'fable-judge']
@@ -419,7 +422,7 @@ const doctor = (state) => {
       : '',
   )
 
-  const defaults = projectPermission({ commit })
+  const defaults = projectPermission({ commit, strict })
   const overrides = Object.entries(defaults.bash)
     .filter(([k, v]) => project?.bash?.[k] !== undefined && project.bash[k] !== v)
     .map(([k, v]) => `- \`${k}\`: plugin default \`${v}\` → project \`${project.bash[k]}\``)
@@ -430,8 +433,9 @@ const doctor = (state) => {
 }
 
 export const FableMethod = async (_input, options = {}) => {
-  const commit = options.permissionProfile === 'strict' ? 'ask' : 'allow'
-  const state = { config: null, commit, injected: { agents: [], commands: [] } }
+  const strict = options.permissionProfile === 'strict'
+  const commit = strict ? 'ask' : 'allow'
+  const state = { config: null, commit, strict, injected: { agents: [], commands: [] } }
 
   return {
     tool: {
@@ -475,7 +479,7 @@ export const FableMethod = async (_input, options = {}) => {
       // Permissions: a project that set `permission` to a bare string has made
       // a deliberate blanket choice — leave it alone.
       if (typeof config.permission !== 'string') {
-        config.permission = fill(projectPermission({ commit }), config.permission)
+        config.permission = fill(projectPermission({ commit, strict }), config.permission)
 
         // A project catch-all of `ask` also covers the `skill` permission, and
         // then Fable cannot load its own skills: every command prompts in the
