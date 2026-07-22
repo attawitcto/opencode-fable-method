@@ -39,12 +39,28 @@ your working tree is untouched because nothing was ever written to it.
 |---|---|
 | Agents | `fable` (primary), `evidence` (read-only), `fable-judge` (read-only) |
 | Commands | `/fable`, `/fable-loop`, `/fable-method`, `/fable-plan`, `/fable-judge`, `/fable-domain`, `/fable-doctor` |
+| Tools | `fable_doctor` — read-only wiring + permission report, computed in the plugin |
 | Skills | `fable-method`, `fable-loop`, `fable-judge`, `fable-domain` |
 | Instructions | Fable invariants, appended to `instructions` — your `AGENTS.md` is never modified |
 | Permissions | The `critical-only-compromise-v1` profile (below) |
 
-Run `/fable-doctor` at any time for a read-only report of how Fable is
-actually wired into the current project.
+Run `/fable-doctor` for a report of what actually resolved: which agents,
+commands and skills are live and where each came from, the effective
+permission for representative commands **per agent**, the edit/read gates, and
+every rule your project overrode. The `fable_doctor` tool computes all of it
+inside the plugin from the resolved config — it runs no shell commands and
+reads no files, so the answer is instant and cannot drift from reality.
+
+From outside a session, ask OpenCode directly:
+
+```bash
+opencode debug config          # agent / command / skills.paths / permission
+opencode debug skill           # confirms the four fable-* skills resolve
+opencode debug agent evidence  # confirms a subagent is read-only
+```
+
+Permission rules are last-match-wins, so read the **last** matching entry in
+that output, not the first.
 
 ## Permission profile
 
@@ -101,8 +117,12 @@ outright.
 ## Known limits
 
 - `opencode --pure` disables external plugins, which removes Fable entirely.
-- Requires OpenCode `>=1.17 <2`. `/fable-doctor` flags a version outside that
-  range.
+- Verified against OpenCode 1.18.4 with `@opencode-ai/plugin` 1.14.48. The
+  plugin API is still evolving, so pin both the plugin version and a known
+  OpenCode version for reproducible behaviour.
+- Headless: use `opencode run --command fable-method "<args>"`. Passing
+  `"/fable-method ..."` as a plain message expands the template but runs it on
+  the default agent instead of `fable`.
 
 ## Credits
 

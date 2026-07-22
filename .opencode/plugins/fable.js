@@ -129,6 +129,20 @@ const INSPECT_DENIES = [
 
 const toMap = (pairs) => Object.fromEntries(pairs)
 
+/**
+ * Every deny from the main profile, reused verbatim so a read-only subagent can
+ * never end up more permissive than the primary agent. Derived rather than
+ * copied: a new deny added above is picked up here automatically.
+ */
+const HARD_DENIES = bashRules({ commit: 'allow' }).filter(([, action]) => action === 'deny')
+
+/**
+ * Shell map for an agent that must not act. Order matters: the catch-all, then
+ * the inspection allows, then every deny — so a deny always has the last word.
+ */
+const readOnlyBash = (fallback) =>
+  toMap([['*', fallback], ...INSPECT_RULES, ...INSPECT_DENIES, ...HARD_DENIES])
+
 const projectPermission = ({ commit }) => ({
   '*': 'allow',
   read: {
@@ -187,7 +201,7 @@ const AGENTS = () => ({
       edit: 'deny',
       // `edit: deny` does not make the shell read-only, so bash is locked
       // down separately: deny everything, then allow inspection only.
-      bash: toMap([['*', 'deny'], ...INSPECT_RULES, ...INSPECT_DENIES]),
+      bash: readOnlyBash('deny'),
     },
   },
   'fable-judge': {
@@ -199,8 +213,10 @@ const AGENTS = () => ({
       edit: 'deny',
       // Unknown commands ask rather than deny, so a project can approve its
       // own test/lint/build commands at execution time without this plugin
-      // guessing which package-manager scripts are safe to run.
-      bash: toMap([['*', 'ask'], ...INSPECT_RULES, ...INSPECT_DENIES]),
+      // guessing which package-manager scripts are safe to run. The hard
+      // denies still apply — `ask` must never become an approval path for
+      // publishing or a destructive command.
+      bash: readOnlyBash('ask'),
     },
   },
 })
@@ -252,23 +268,118 @@ const COMMANDS = () => ({
   'fable-doctor': {
     description: 'Report how Fable is wired into this project. Read-only.',
     agent: 'fable',
-    template: `Report the current Fable wiring for this project. Read only — change nothing.
-
-1. Run \`opencode debug config\` and report which of the agents \`fable\`, \`evidence\`, \`fable-judge\` and the commands \`fable\`, \`fable-loop\`, \`fable-method\`, \`fable-plan\`, \`fable-judge\`, \`fable-domain\` are present.
-2. Run \`opencode debug skill\` and report whether the four \`fable-*\` skills are discoverable.
-3. From the resolved config, report the effective values of \`permission.*\`, \`permission.bash.*\`, \`git commit*\`, \`git push*\`, \`git push --force*\`, \`git reset --hard*\`, \`git clean*\`, \`rm -rf *\`.
-4. Report any value where this project's \`opencode.json\` overrides the plugin default, and say whether the override is stricter or looser.
-5. Run \`opencode --version\` and flag it if it is outside \`>=1.17 <2\`.
-6. Run \`git status --short\` and confirm the working tree is unchanged.
-
-Report findings only. Do not edit or repair anything.`,
+    template:
+      'Call the `fable_doctor` tool and relay its output verbatim. Run no other commands, read no files, and add no commentary beyond flagging any row that reads **NO** or any permission that looks wrong.',
   },
 })
 
+/**
+ * Glob match for OpenCode permission patterns, which use `*` only.
+ * Permission maps are last-match-wins over key order, so the scan keeps the
+ * last hit rather than returning on the first — the single most common way to
+ * misread these rules is to stop at the first match.
+ */
+const matches = (pattern, cmd) =>
+  new RegExp(
+    '^' + pattern.split('*').map((s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('.*') + '$',
+  ).test(cmd)
+
+const effective = (cmd, ...maps) => {
+  let hit
+  for (const map of maps) {
+    if (typeof map === 'string') hit = map
+    else for (const [pattern, action] of Object.entries(map || {})) {
+      if (matches(pattern, cmd)) hit = action
+    }
+  }
+  return hit
+}
+
+const PROBES = [
+  'git status --short',
+  'git commit -m msg',
+  'git push origin main',
+  'git push --force origin main',
+  'git reset --hard HEAD',
+  'git clean -fd',
+  'rm -rf build',
+  'sudo ls',
+  'npm publish',
+]
+
+const doctor = (state) => {
+  const { config, injected, commit } = state
+  if (!config) return 'fable-doctor: the config hook has not run yet — restart OpenCode.'
+
+  const agents = ['fable', 'evidence', 'fable-judge']
+  const commands = ['fable', 'fable-loop', 'fable-method', 'fable-plan', 'fable-judge', 'fable-domain']
+  const skills = ['fable-method', 'fable-loop', 'fable-judge', 'fable-domain']
+  const out = []
+
+  out.push('## Fable wiring\n')
+  out.push('| surface | present | source |')
+  out.push('|---|---|---|')
+  for (const a of agents) {
+    out.push(`| agent \`${a}\` | ${config.agent?.[a] ? 'yes' : '**NO**'} | ${injected.agents.includes(a) ? 'plugin' : 'project'} |`)
+  }
+  for (const c of commands) {
+    const bound = config.command?.[c]?.agent ?? '-'
+    out.push(`| command \`/${c}\` | ${config.command?.[c] ? 'yes' : '**NO**'} | ${injected.commands.includes(c) ? 'plugin' : 'project'} → agent \`${bound}\` |`)
+  }
+  const pathRegistered = config.skills?.paths?.includes(SKILLS_DIR)
+  for (const s of skills) {
+    const onDisk = fs.existsSync(path.join(SKILLS_DIR, s, 'SKILL.md'))
+    out.push(`| skill \`${s}\` | ${pathRegistered && onDisk ? 'yes' : '**NO**'} | ${onDisk ? 'on disk' : 'missing from package'} |`)
+  }
+  out.push(`| instructions | ${config.instructions?.includes(INVARIANTS) ? 'yes' : '**NO**'} | plugin |`)
+
+  const project = config.permission
+  out.push(`\n## Effective bash permissions (profile: ${commit === 'ask' ? 'strict' : 'default'})\n`)
+  out.push('Last-match-wins across the project map, then the agent map.\n')
+  out.push('| command | fable | evidence | fable-judge |')
+  out.push('|---|---|---|---|')
+  for (const cmd of PROBES) {
+    const cell = (agent) =>
+      effective(cmd, project?.bash, config.agent?.[agent]?.permission?.bash) ?? 'inherit'
+    out.push(`| \`${cmd}\` | ${cell('fable')} | ${cell('evidence')} | ${cell('fable-judge')} |`)
+  }
+
+  out.push('\n## Edit / read gates\n')
+  out.push('| agent | edit src | edit .env | read .env |')
+  out.push('|---|---|---|---|')
+  for (const a of agents) {
+    const ap = config.agent?.[a]?.permission
+    out.push(
+      `| \`${a}\` | ${effective('src/x.ts', project?.edit, ap?.edit) ?? '-'} | ` +
+        `${effective('.env', project?.edit, ap?.edit) ?? '-'} | ` +
+        `${effective('.env', project?.read, ap?.read) ?? '-'} |`,
+    )
+  }
+
+  const defaults = projectPermission({ commit })
+  const overrides = Object.entries(defaults.bash)
+    .filter(([k, v]) => project?.bash?.[k] !== undefined && project.bash[k] !== v)
+    .map(([k, v]) => `- \`${k}\`: plugin default \`${v}\` → project \`${project.bash[k]}\``)
+  out.push('\n## Project overrides\n')
+  out.push(overrides.length ? overrides.join('\n') : 'None — every rule is the plugin default.')
+
+  return out.join('\n')
+}
+
 export const FableMethod = async (_input, options = {}) => {
   const commit = options.permissionProfile === 'strict' ? 'ask' : 'allow'
+  const state = { config: null, commit, injected: { agents: [], commands: [] } }
 
   return {
+    tool: {
+      fable_doctor: {
+        description:
+          'Report how Fable is wired into this project: which agents, commands and skills resolved, the effective permission for representative commands per agent, and which rules the project overrode. Read-only, computed from the resolved config — runs no commands.',
+        args: {},
+        execute: async () => doctor(state),
+      },
+    },
+
     config: async (config) => {
       // Skills: point OpenCode at the copies shipped inside this package.
       config.skills ||= {}
@@ -283,18 +394,27 @@ export const FableMethod = async (_input, options = {}) => {
       // Agents and commands: fill only what the project has not defined.
       config.agent ||= {}
       for (const [name, def] of Object.entries(AGENTS())) {
-        if (!config.agent[name]) config.agent[name] = def
+        if (config.agent[name]) continue
+        config.agent[name] = def
+        state.injected.agents.push(name)
       }
 
       config.command ||= {}
       for (const [name, def] of Object.entries(COMMANDS())) {
-        if (!config.command[name]) config.command[name] = def
+        if (config.command[name]) continue
+        config.command[name] = def
+        state.injected.commands.push(name)
       }
 
       // Permissions: a project that set `permission` to a bare string has made
       // a deliberate blanket choice — leave it alone.
-      if (typeof config.permission === 'string') return
-      config.permission = fill(projectPermission({ commit }), config.permission)
+      if (typeof config.permission !== 'string') {
+        config.permission = fill(projectPermission({ commit }), config.permission)
+      }
+
+      // Kept for fable_doctor, which reports on the config rather than shelling
+      // out to re-derive it.
+      state.config = config
     },
   }
 }
