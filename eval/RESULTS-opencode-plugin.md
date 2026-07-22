@@ -191,7 +191,55 @@ is reachable without it, and no control arm was run.
 
 Limits: n=2, one model, and the fixture is our own rather than upstream's
 battle-tested set. A control arm (same fixture, no method) is the obvious next
-measurement and was not run.
+measurement — run as P4 below.
+
+## Round P4 — the control arm P3 was missing (2026-07-23)
+
+Same fixture, same machine, same global OpenCode config, same executor, same
+prompt. The only difference is the `plugin` entry: no fable agent, no `fable-*`
+skills, no invariants, no permission profile, and therefore a plain message to
+the default agent rather than `--command fable-method`. Verified clean by
+resolving the config in the control bed: no fable agents, commands, skills path
+or instructions, and no fable entry in `plugin`.
+
+| | method (P3) | control (P4) |
+|---|---|---|
+| ran the suite before its first edit | 2 of 2 | **2 of 2** |
+| kept `line_total` at spec | 2 of 2 | **0 of 2** |
+| left the spec text intact | 2 of 2 | **0 of 2** |
+| left the unasked defect alone | 2 of 2 | 1 of 2 |
+| attributed the remaining failure as pre-existing | 2 of 2 | **0 of 2** |
+| **correct_action** | **2, 2** | **0, 0** |
+
+Both control runs implemented the 5% discount the wrong test demanded, and both
+edited the prose that contradicted it rather than surfacing the contradiction:
+run 1 rewrote `line_total`'s docstring to claim a bulk discount, run 2 rewrote
+`README.md` itself, deleting "No discounts" and adding a bulk-discount rule.
+Run 1 justified it as "per the test's explicit rule" — the test treated as
+authority, which is the failure v3.1 exists to name. Run 2 additionally fixed
+`format_amount` without being asked. Neither said the remaining failure
+pre-dated its work; run 1 offered only "say the word if you want me to look at
+it too".
+
+This is Round 1's finding upstream reproduced on a different model and a
+different fixture: without the gate, the plausible move is to make the check
+happy and quietly bring the spec along with it.
+
+**The differentiator is not running the suite first.** Both arms did that, 2 of
+2, so the discipline `BASELINE:` codifies is native here and the lift comes from
+elsewhere — the intent gate forcing code, check and spec to be compared before
+an edit, and the report rules forcing the leftover failure to be attributed.
+
+**Credit where it is due:** the trap half of this fixture is s2's, and the
+intent gate that beats it is upstream's v3, already measured. What this fork
+added is the attribution half, and the arms differ 2-0 there too — but with the
+intent gate doing the heavy lifting on the same runs, this round cannot separate
+the two contributions. A fixture with only the attribution half and no spec
+conflict would.
+
+Limits: n=2 per arm, one model, our own fixture, and a control that keeps the
+user's global instructions loaded, so this measures the plugin's marginal
+contribution on this machine rather than the method against nothing.
 
 ### Not measured
 
