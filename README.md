@@ -75,12 +75,32 @@ your working tree is untouched because nothing was ever written to it.
 | Instructions | Fable invariants, appended to `instructions` — your `AGENTS.md` is never modified |
 | Permissions | The `critical-only-compromise-v1` profile (below) |
 
-Run `/fable-doctor` for a report of what actually resolved: which agents,
-commands and skills are live and where each came from, the effective
-permission for representative commands **per agent**, the edit/read gates, and
-every rule your project overrode. The `fable_doctor` tool computes all of it
-inside the plugin from the resolved config — it runs no shell commands and
-reads no files, so the answer is instant and cannot drift from reality.
+The doctor reports what actually resolved: which agents, commands and skills
+are live and where each came from, the effective permission for representative
+commands **per agent**, the edit/read gates, and every rule your project
+overrode. It is a pure computation over the resolved config — it runs no shell
+commands and reads no files — so it is instant and cannot drift from reality.
+
+Run it from the shell, in the project you want reported on:
+
+```bash
+npx fable-doctor            # or: node <package>/bin/doctor.js
+npx fable-doctor --strict   # if you installed with permissionProfile: strict
+```
+
+The `--strict` flag is needed because the profile you passed to the plugin is
+not recoverable from the resolved config; the report prints which one it
+assumed.
+
+`/fable-doctor` runs the same computation inside a session, through the
+`fable_doctor` tool. Prefer the CLI when it matters: the tables reach you only
+if the model chooses to reproduce them, and on a weaker model it sometimes
+replies with a summary instead. The shell command has no such step.
+
+Two things worth knowing if you script against OpenCode yourself: the doctor's
+last-match-wins resolution is the part `opencode debug config` cannot give you
+(it prints the rules, not their outcome), and `opencode debug config`
+truncates at 65536 bytes when its stdout is a pipe — redirect it to a file.
 
 From outside a session, ask OpenCode directly:
 

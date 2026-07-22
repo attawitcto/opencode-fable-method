@@ -5,7 +5,11 @@
   "type": "module",
   "main": ".opencode/plugins/fable.js",
   "exports": "./.opencode/plugins/fable.js",
+  "bin": {
+    "fable-doctor": "bin/doctor.js"
+  },
   "files": [
+    "bin",
     ".opencode/plugins",
     "skills",
     "prompts",

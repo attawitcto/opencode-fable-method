@@ -498,3 +498,10 @@ export const FableMethod = async (_input, options = {}) => {
 }
 
 export default FableMethod
+
+/**
+ * Exported for `bin/doctor.js`, which prints the same report from the CLI with
+ * no model in the loop. Shared rather than reimplemented: the report is only
+ * trustworthy if both callers compute it from the same source.
+ */
+export { doctor, AGENTS, COMMANDS }
