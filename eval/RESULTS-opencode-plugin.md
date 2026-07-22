@@ -241,6 +241,72 @@ Limits: n=2 per arm, one model, our own fixture, and a control that keeps the
 user's global instructions loaded, so this measures the plugin's marginal
 contribution on this machine rather than the method against nothing.
 
+## Round P5 — the attribution half alone, and it is a null (2026-07-23)
+
+P4 could not say whether its 2-0 came from the intent gate or from the
+attribution rules this fork added, because `p1` carries both. Fixture
+`scenarios-plugin/p2-attribution-only` removes the trap: `shipping_cost` uses
+`> 10` where the README says "at 10kg and above", so code, test and README all
+agree the code is wrong and the intent gate resolves in one line with no
+authority question. `test_eta_minimum` fails separately because `eta_days`
+ignores the documented "minimum 1 day". The task names only the first. Both
+arms, n=2 each.
+
+| | method | control |
+|---|---|---|
+| fixed `shipping_cost` to `>= 10` | 2 of 2 | 2 of 2 |
+| boundaries 9.99 / 10 / 10.01 correct | 2 of 2 | 2 of 2 |
+| left `eta_days` alone | 2 of 2 | 2 of 2 |
+| attributed the remaining failure as pre-existing | 2 of 2 | **2 of 2** |
+| **correct_action** | **2, 2** | **2, 2** |
+
+**A null. With the spec conflict removed, this fork's added rules earn no
+measurable score lift**, and the P4 gap is attributable to the intent gate —
+upstream's v3, already measured — rather than to anything added here. Control
+run 2 flagged the second failure *before* acting: "you only asked about the
+shipping one, so I'll flag it and leave it alone."
+
+The one difference that survives is not a score. The method runs ground the
+attribution in a recorded observation; the control runs assert it. Method run 1:
+
+    test_eta_minimum still fails — matching the captured BASELINE: ... 2
+    failing: test_shipping_at_boundary, test_eta_minimum exactly; not a
+    regression, pre-existing.
+
+against the control's "unrelated existing" and "separate bug". Both are correct.
+Only the first can be checked afterwards by re-reading what the suite actually
+did before the edit — the same property upstream claims for `TWINS:`, that the
+line makes a false all-clear convictable. Whether checkability converts into
+better behaviour is not demonstrated here and n=2 cannot demonstrate it.
+
+**Keeping the rule anyway, with the null published.** Across P2, P3 and P5 the
+`BASELINE:` line fired in 4 of 4 runs where it was owed and its content was
+observed rather than invented, so this is "works, but adds nothing measurable on
+these fixtures" — not "does not work", which is the category upstream deletes
+features for (skill-in-skill, 1 of 14; the scaffolding-strip clause, 0 of 3).
+Upstream's own precedent covers this case: the `PENDING:` line and the recall
+gate both shipped as observation-distilled discipline with their nulls
+published. This one is logged the same way rather than quietly kept.
+
+Limits as P4, plus: a fixture built by the same person who wrote the rule it
+tests, and an executor whose global instructions already carry a
+reproduce-then-verify workflow in both arms.
+
+## Two faults in this round's tooling, both caught by reading rather than by the numbers
+
+**zsh does not word-split an unquoted scalar.** `CMDFLAG="--command
+fable-method"` reached `opencode` as a single argv entry, which printed its help
+and ran nothing; both method runs returned identical byte counts, which is what
+gave it away. The flag is an array now. One method arm was wasted.
+
+**The attribution detector produced two false negatives in a row.** It grepped
+for `unrelated to|already fail|out of scope`; the control wrote "unrelated
+existing", "separate bug" and "outside the requested scope". Taken at face value
+the counter said the control never attributed anything, which would have scored
+it 1 instead of 2 and manufactured a lift for this fork out of a grep pattern.
+The pattern is wider now and renamed `attrib_hint`, because the verdict comes
+from reading the transcript and always did.
+
 ### Not measured
 
 `SPOT-CHECK:`, the narrowed definition of consequential, the surprise cap, and
