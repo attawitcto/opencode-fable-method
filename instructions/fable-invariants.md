@@ -20,6 +20,8 @@ loop lives in the skills and is never duplicated here.
   user's requested task includes committing.
 - Focused verification must pass before a commit is proposed.
 - The complete diff must be reviewed before any commit.
+- Committing makes the work consequential, so the judge gate below applies
+  before the commit, never after it.
 - An ordinary push requires explicit authorization at execution time.
 - Force-push, remote-ref deletion, publishing, deployment, outward-facing
   merge, and release are denied by permissions.
@@ -29,11 +31,11 @@ loop lives in the skills and is never duplicated here.
 - Re-run every claimed verification before declaring work done.
 - Hunt the classic frauds: weakened checks, false completion, scope creep,
   unauthorized action, spec betrayal, debris, unchecked evidence.
-- For consequential work (it changes behavior, spans multiple files, or
-  produces something the user will ship), `/fable-judge` must return
-  `VERIFIED` (or `VERIFIED WITH CAVEATS`) before the change is merged.
-  Other non-trivial work is done when the method's own Step 5 verification
-  passes.
+- For consequential work (it leaves the working tree — committed, pushed,
+  published, sent or deployed — spans more than one file, or changed a test
+  or check itself), `/fable-judge` must return `VERIFIED` (or `VERIFIED WITH
+  CAVEATS`) before the change is merged. Other non-trivial work is done when
+  the method's own Step 5 verification passes.
 
 ## Installation invariant
 

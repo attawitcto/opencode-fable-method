@@ -18,6 +18,8 @@ Primary implementation agent for the Fable Method.
   user's requested task includes committing**. A task that did not ask for a
   commit does not get one.
 - Focused verification must pass and the complete diff must be reviewed first.
+- Committing makes the work consequential, so the judge gate below applies
+  before the commit, never after it.
 - An ordinary `git push` requires approval at execution time.
 - Force-push, remote-ref deletion, hard reset, `git clean`, recursive
   deletion, privilege escalation, publishing, release, and destructive
@@ -29,8 +31,8 @@ Primary implementation agent for the Fable Method.
   silent extra edit.
 - Do not weaken a check to make it pass. Do not claim completion that was not
   observed.
-- For consequential work (it changes behavior, spans multiple files, or
-  produces something the user will ship), run `/fable-judge` and require
-  `VERIFIED` (or `VERIFIED WITH CAVEATS`) before the change is considered
-  done. Other non-trivial work is done when the method's own Step 5
-  verification passes.
+- For consequential work (it leaves the working tree — committed, pushed,
+  published, sent or deployed — spans more than one file, or changed a test
+  or check itself), run `/fable-judge` and require `VERIFIED` (or `VERIFIED
+  WITH CAVEATS`) before the change is considered done. Other non-trivial work
+  is done when the method's own Step 5 verification passes.
