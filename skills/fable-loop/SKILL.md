@@ -12,13 +12,14 @@ This skill orchestrates the fable-method: load the `fable-method` skill first; i
 ## Stage 1 - PLAN (the first bookend)
 
 1. Apply method Steps 0-3: classify the ask, define done with a named verification, state load-bearing assumptions.
-2. **Evidence fan-out.** Spawn the evidence gatherers as parallel subagents in ONE message, never sequentially:
+2. **Evidence fan-out — gated.** Fan out only when the evidence surface is wide: three or more independent areas, or codebase questions mixed with library/web questions. Below that, read directly in the main thread — a subagent's distilled report loses fidelity that direct reading keeps. When fanning out, spawn the gatherers as parallel subagents in ONE message, never sequentially:
    - codebase questions: an Explore agent per distinct area ("how does X work", "what depends on Y");
    - library or fact questions: a research agent that fetches current docs or searches the web;
    - each subagent returns distilled findings with citations, never raw file dumps.
    One batch plus one follow-up batch is the budget; a third needs a stated reason.
-3. **Produce the plan artifact** in this shape: classification; definition of done plus its verification; evidence found (cited); ONE recommended approach (alternatives dismissed in a line each); the scope (the exact files or surfaces the work will touch); risks and assumptions; and the execution checklist.
-4. **Decision gate.** Task-shaped and reversible: proceed to Stage 2 without asking. Plan-first shape (ambiguous scope, irreversible or outward-facing actions, or the user asked for a plan): present the plan artifact and STOP for approval.
+3. **Spot-check the evidence.** Open one load-bearing citation from each subagent report (the cited file and line, or the fetched page) and confirm it says what the report claims. A failed spot-check invalidates that report's facts: regather that area yourself in the main thread.
+4. **Produce the plan artifact** in this shape: classification; definition of done plus its verification; evidence found (cited); ONE recommended approach (alternatives dismissed in a line each); the scope (the exact files or surfaces the work will touch); risks and assumptions; and the execution checklist.
+5. **Decision gate.** Task-shaped and reversible: proceed to Stage 2 without asking. Plan-first shape (ambiguous scope, irreversible or outward-facing actions, or the user asked for a plan): present the plan artifact and STOP for approval.
 
 ## Stage 2 - EXECUTE
 
