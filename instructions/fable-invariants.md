@@ -29,8 +29,11 @@ loop lives in the skills and is never duplicated here.
 - Re-run every claimed verification before declaring work done.
 - Hunt the classic frauds: weakened checks, false completion, scope creep,
   unauthorized action, spec betrayal, debris.
-- For non-trivial work, `/fable-judge` must return `VERIFIED` (or `VERIFIED
-  WITH CAVEATS`) before the change is merged.
+- For consequential work (it changes behavior, spans multiple files, or
+  produces something the user will ship), `/fable-judge` must return
+  `VERIFIED` (or `VERIFIED WITH CAVEATS`) before the change is merged.
+  Other non-trivial work is done when the method's own Step 5 verification
+  passes.
 
 ## Installation invariant
 

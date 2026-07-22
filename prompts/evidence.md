@@ -16,6 +16,9 @@ Unknowns
 Suggested next inspection
 ```
 
+- Every entry under `Relevant facts` and `Execution path` carries its
+  citation — `path:line` for files, the URL for fetched pages. An uncitable
+  observation belongs under `Unknowns`.
 - Report what was observed, not what is likely. An unverified claim belongs
   under `Unknowns`, never under `Relevant facts`.
 - Use when the `fable` agent or `/fable-loop` needs evidence that should be

@@ -11,7 +11,7 @@ Eighteen ways agentic work goes wrong, what each looks like from the outside, an
 | 5 | **Invented APIs** | Code calls endpoints/signatures that do not exist | Step 2.2: primary sources, never recall; Step 4.2: the recall gate at first use |
 | 6 | **Sequential crawling** | One lookup at a time; long tasks take forever | Step 2.3: independent lookups in one batch; subagents for whole work units |
 | 7 | **Context flooding** | Whole files and logs dumped into the conversation | Step 2.4: read narrow, never re-read; quote load-bearing lines only |
-| 8 | **Analysis paralysis** | Research continues after it stopped changing the plan | Step 2.5: two rounds, then a stated reason or stop |
+| 8 | **Analysis paralysis** | Research continues after it stopped changing the plan | Step 2.5: two rounds, then a stated reason or stop; a surprise resets the budget |
 | 9 | **Plowing through surprises** | Evidence contradicted the plan; agent forced the plan anyway | Step 2.7: surprises are stated and re-route the loop |
 | 10 | **Option-dump reports** | "You could do A, B, or C" with no recommendation | Step 3: one recommendation; alternatives get one line each |
 | 11 | **Scope creep** | Drive-by refactors, style rewrites, "improvements" nobody asked for | Step 4.3: smallest correct change; Step 3: the declared scope |

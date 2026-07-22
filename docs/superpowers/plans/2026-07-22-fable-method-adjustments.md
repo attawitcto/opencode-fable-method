@@ -17,6 +17,18 @@
 - The working tree already has uncommitted changes (`README.md` +34 lines, untracked `CLAUDE.md`). Stage ONLY the files each task names — never `git add -A` / `git add .`.
 - TDD does not apply to prose edits; each task's check is a grep (or node run) with the expected output stated.
 
+## Amendments (approved mid-execution)
+
+Two tasks' wording was amended after review found the plan's own text too weak.
+Where the task text below differs, these govern:
+
+- **Task 3, item 2 threshold:** `Fan out only when the evidence surface is wide: the questions you have already written down number three or more, or they mix codebase questions with library/web questions.`
+- **Task 3, item 3 in full:** `3. **Spot-check the evidence.** Open one citation behind a fact your plan will depend on from each subagent report (the cited file and line, or the fetched page) and confirm it says what the report claims. A report that cites nothing fails the spot-check outright. A failed spot-check invalidates that report's facts: regather that area yourself in the main thread.`
+- **Task 4, appended sentence:** `A surprise (rule 7) resets the budget: the question it raised gets its own two rounds. The reset is not unlimited — a third surprise on the same task means stop and hand back what you have, like any other hard bound.`
+
+A final whole-branch review then found contradictions with files these tasks did
+not touch; the fixes are in the branch's last commit.
+
 ---
 
 ### Task 1: Baseline capture (`BASELINE:` artifact line)

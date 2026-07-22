@@ -96,7 +96,9 @@ flowchart TD
     H1 -->|yes| H2{"Half 2: is the surrounding<br/>system still healthy?<br/>build, tests, lint"}
     H2 -->|yes| OK["Verified. To the report,<br/>with the output shown"]
     H1 -->|no| WHY{"Why did it fail?"}
-    H2 -->|no| WHY
+    H2 -->|no| BASE{"Was it already failing<br/>at BASELINE?"}
+    BASE -->|yes| PRE["Pre-existing condition.<br/>Report it; not a regression"]
+    BASE -->|no| WHY
     WHY -->|"mechanical mistake in the change"| BACK4["Back to Step 4"]
     WHY -->|"it surprises you or contradicts<br/>your understanding"| BACK2["Back to Step 2"]
     BACK4 --> CNT{"Third failed cycle on the<br/>same issue? Or blocked by anything<br/>outside your control?"}
