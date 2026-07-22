@@ -1,0 +1,20 @@
+{
+  "name": "opencode-fable-method",
+  "version": "0.1.0",
+  "description": "Fable Method for OpenCode — agents, commands, skills and a permission profile delivered as a single plugin. No files installed into your repository.",
+  "type": "module",
+  "main": ".opencode/plugins/fable.js",
+  "exports": "./.opencode/plugins/fable.js",
+  "files": [
+    ".opencode/plugins",
+    "skills",
+    "prompts",
+    "instructions"
+  ],
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "fable-method"
+  ],
+  "license": "MIT"
+}
