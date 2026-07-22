@@ -83,7 +83,15 @@ const bashRules = ({ commit }) => [
   ['helm upgrade*', 'ask'],
 ]
 
-/** Read-only inspection commands, allowed for subagents that must not act. */
+/**
+ * Read-only inspection commands, allowed for subagents that must not act.
+ *
+ * Keep this list generous. A command that is missing here falls through to the
+ * agent's catch-all: `evidence` refuses it, and `fable-judge` asks — and an
+ * approval prompt raised inside a subagent has nowhere to go, so the run hangs
+ * rather than failing. `git branch` and `git rev-parse` were the first two to
+ * prove it. Anything that writes is denied again below, after these allows.
+ */
 const INSPECT_RULES = [
   ['git status*', 'allow'],
   ['git diff*', 'allow'],
@@ -91,7 +99,36 @@ const INSPECT_RULES = [
   ['git show*', 'allow'],
   ['git grep*', 'allow'],
   ['git blame*', 'allow'],
+  ['git branch*', 'allow'],
+  ['git rev-parse*', 'allow'],
+  ['git rev-list*', 'allow'],
+  ['git merge-base*', 'allow'],
+  ['git ls-files*', 'allow'],
+  ['git ls-tree*', 'allow'],
+  ['git cat-file*', 'allow'],
+  ['git describe*', 'allow'],
+  ['git shortlog*', 'allow'],
+  ['git diff-tree*', 'allow'],
+  ['git name-rev*', 'allow'],
+  ['git config --get*', 'allow'],
+  ['git check-ignore*', 'allow'],
   ['ls*', 'allow'],
+  ['pwd*', 'allow'],
+  ['echo*', 'allow'],
+  ['printf*', 'allow'],
+  ['basename*', 'allow'],
+  ['dirname*', 'allow'],
+  ['sort*', 'allow'],
+  ['uniq*', 'allow'],
+  ['cut*', 'allow'],
+  ['tr *', 'allow'],
+  ['awk*', 'allow'],
+  ['jq*', 'allow'],
+  ['diff *', 'allow'],
+  ['shasum*', 'allow'],
+  ['du *', 'allow'],
+  ['which*', 'allow'],
+  ['test *', 'allow'],
   ['find *', 'allow'],
   ['grep*', 'allow'],
   ['rg*', 'allow'],
@@ -269,7 +306,7 @@ const COMMANDS = () => ({
     description: 'Report how Fable is wired into this project. Read-only.',
     agent: 'fable',
     template:
-      'Call the `fable_doctor` tool and relay its output verbatim. Run no other commands, read no files, and add no commentary beyond flagging any row that reads **NO** or any permission that looks wrong.',
+      'Call the `fable_doctor` tool. Your reply is its output reproduced in full — every heading and every table row, unchanged and unsummarised. The tables are the deliverable; a summary of them is not. After reproducing the report, and only then, add at most two sentences calling out anything under `## ⚠ Blocking`, any row reading **NO**, or any permission that contradicts the stated policy. Run no commands and read no files.',
   },
 })
 
@@ -356,6 +393,32 @@ const doctor = (state) => {
     )
   }
 
+  // A project catch-all of `ask`/`deny` covers every permission type, not just
+  // the ones it looks like it covers. Fable then prompts for its own skill on
+  // every command, and `opencode run` auto-rejects that prompt and fails. This
+  // is the one misconfiguration that leaves an install looking healthy while
+  // being unusable, so it is reported first.
+  const blockers = []
+  const catchAll = typeof project === 'string' ? project : project?.['*']
+  if (catchAll && catchAll !== 'allow') {
+    blockers.push(
+      `\`permission."*"\` is \`${catchAll}\`. It applies to every tool — reads, greps, skill loads — ` +
+        'so each one prompts, and `opencode run` auto-rejects prompts and fails. Remove the catch-all ' +
+        'and let this plugin\'s granular profile stand, or set the specific rules you actually want.',
+    )
+  }
+  if (project?.skill && project.skill !== 'allow') {
+    blockers.push(
+      `\`permission.skill\` is \`${JSON.stringify(project.skill)}\`, so loading a \`fable-*\` skill needs approval. ` +
+        'Every Fable command begins by loading its skill.',
+    )
+  }
+  out.unshift(
+    blockers.length
+      ? `## ⚠ Blocking\n\n${blockers.map((b) => `- ${b}`).join('\n')}\n`
+      : '',
+  )
+
   const defaults = projectPermission({ commit })
   const overrides = Object.entries(defaults.bash)
     .filter(([k, v]) => project?.bash?.[k] !== undefined && project.bash[k] !== v)
@@ -376,7 +439,10 @@ export const FableMethod = async (_input, options = {}) => {
         description:
           'Report how Fable is wired into this project: which agents, commands and skills resolved, the effective permission for representative commands per agent, and which rules the project overrode. Read-only, computed from the resolved config — runs no commands.',
         args: {},
-        execute: async () => doctor(state),
+        execute: async (_args, ctx) => {
+          ctx?.metadata?.({ title: 'Fable wiring report' })
+          return doctor(state)
+        },
       },
     },
 
@@ -410,6 +476,14 @@ export const FableMethod = async (_input, options = {}) => {
       // a deliberate blanket choice — leave it alone.
       if (typeof config.permission !== 'string') {
         config.permission = fill(projectPermission({ commit }), config.permission)
+
+        // A project catch-all of `ask` also covers the `skill` permission, and
+        // then Fable cannot load its own skills: every command prompts in the
+        // TUI, and `opencode run` auto-rejects the prompt and fails outright.
+        // Loading a skill only reads text that ships inside this package, so
+        // it is allowed unless the project has an explicit opinion about
+        // `skill`. Set `"permission": { "skill": "ask" }` to override.
+        config.permission.skill ??= 'allow'
       }
 
       // Kept for fable_doctor, which reports on the config rather than shelling

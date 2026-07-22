@@ -12,20 +12,51 @@ so `git status` stays clean. That is OpenCode, not this plugin.)
 
 ## Install
 
+**This package is not published yet.** Until it is, install it from a local
+checkout by adding one key to your project's `opencode.json` — merge it into
+the file, do not replace the file:
+
+```json
+{
+  "plugin": ["file:/absolute/path/to/opencode-fable-method"]
+}
+```
+
+A `file:` path is machine-specific, so use it for your own checkout and never
+commit it to a shared repository.
+
+> **Check your existing `permission` block first.** If it contains a
+> catch-all — `"permission": { "*": "ask" }` or `"deny"` — that rule applies
+> to *every* tool including skill loading, so every Fable command will prompt
+> before it can start, and `opencode run` auto-rejects prompts and fails
+> outright. Delete the catch-all and let this plugin's granular profile stand,
+> keeping only the specific rules you actually want stricter. `/fable-doctor`
+> reports this as a blocking problem.
+
+Once the package is published, install becomes one command:
+
 ```bash
 opencode plugin opencode-fable-method
 ```
 
-or add it yourself, pinned:
+or, added by hand and pinned to a version:
 
 ```json
 {
-  "$schema": "https://opencode.ai/config.json",
   "plugin": ["opencode-fable-method@0.1.0"]
 }
 ```
 
-Restart OpenCode — config is loaded once at startup and is not hot-reloaded.
+Either way, restart OpenCode afterwards — config is read once at startup and
+is not hot-reloaded.
+
+To prompt on every commit instead of allowing it, pass the strict profile:
+
+```json
+{
+  "plugin": [["file:/absolute/path/to/opencode-fable-method", { "permissionProfile": "strict" }]]
+}
+```
 
 ## Uninstall
 
@@ -113,6 +144,40 @@ outright.
 3. **Pin the version.** Never `@latest` in `plugin`.
 4. **git is the backup and rollback mechanism.** This plugin ships no
    manifest, no checksums and no `.bak` files, because it installs nothing.
+
+## Effect on your git repository
+
+The plugin writes nothing. Everything it does happens in the resolved config
+in memory, so a session — including live `/fable-*` runs — leaves `git status`
+byte-for-byte unchanged.
+
+OpenCode itself is a different matter. On startup it installs plugin
+dependencies into the project at `.opencode/node_modules/` alongside
+`package.json` and `package-lock.json`. This happens **with or without this
+plugin** — removing every `plugin` entry produces the same three paths — so it
+is OpenCode's behaviour, not Fable's.
+
+Whether those show up in `git status` depends on one file:
+
+| your repo | result |
+|---|---|
+| no `.opencode/.gitignore` | OpenCode writes one covering `node_modules`, `package.json`, `package-lock.json`, `bun.lock` and itself → clean |
+| already has its own `.opencode/.gitignore` | OpenCode **does not overwrite it** → the three paths appear as untracked |
+
+In the second case, add them yourself:
+
+```gitignore
+# .opencode/.gitignore
+node_modules
+package.json
+package-lock.json
+bun.lock
+```
+
+What the plugin *does* constrain is what an agent may do to git: `.git/**` is
+uneditable, `git push` asks, and force-push, `--mirror`, remote-ref deletion,
+`git reset --hard`, `git clean`, `git branch -D` and `git reflog expire` are
+denied. Nothing commits or pushes on its own.
 
 ## Known limits
 
