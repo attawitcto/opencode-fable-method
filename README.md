@@ -50,7 +50,7 @@ or, added by hand and pinned to a version:
 Either way, restart OpenCode afterwards — config is read once at startup and
 is not hot-reloaded.
 
-To prompt on every commit instead of allowing it, pass the strict profile:
+To prompt on every commit and deny PR creation outright, pass the strict profile:
 
 ```json
 {
@@ -117,8 +117,8 @@ in your own `opencode.json` and it takes effect:
 }
 ```
 
-For the common case of wanting every commit prompted, pass the profile option
-instead:
+For the common case of wanting every commit prompted and PR creation denied
+outright, pass the profile option instead:
 
 ```json
 {

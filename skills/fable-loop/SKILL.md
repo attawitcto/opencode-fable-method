@@ -11,13 +11,13 @@ This skill orchestrates the fable-method: load the `fable-method` skill first; i
 
 ## Stage 1 - PLAN (the first bookend)
 
-1. Apply method Steps 0-3: classify the ask, define done with a named verification, state load-bearing assumptions.
+1. Apply method Steps 0-3: classify the ask, define done with a named verification, state load-bearing assumptions, and write down the open questions the plan depends on.
 2. **Evidence fan-out — gated.** Fan out only when the evidence surface is wide: the questions you have already written down number three or more, or they mix codebase questions with library/web questions. Below that, read directly in the main thread — a subagent's distilled report loses fidelity that direct reading keeps. When fanning out, spawn the gatherers as parallel subagents in ONE message, never sequentially:
    - codebase questions: an Explore agent per distinct area ("how does X work", "what depends on Y");
    - library or fact questions: a research agent that fetches current docs or searches the web;
    - each subagent returns distilled findings with citations, never raw file dumps.
    One batch plus one follow-up batch is the budget; a third needs a stated reason.
-3. **Spot-check the evidence.** Open one citation behind a fact your plan depends on from each subagent report (the cited file and line, or the fetched page) and confirm it says what the report claims. A report that cites nothing fails the spot-check outright. A failed spot-check invalidates that report's facts: regather that area yourself in the main thread.
+3. **Spot-check the evidence.** Open one citation behind a fact your plan will depend on from each subagent report (the cited file and line, or the fetched page) and confirm it says what the report claims. A report that cites nothing fails the spot-check outright. A failed spot-check invalidates that report's facts: regather that area yourself in the main thread.
 4. **Produce the plan artifact** in this shape: classification; definition of done plus its verification; evidence found (cited); ONE recommended approach (alternatives dismissed in a line each); the scope (the exact files or surfaces the work will touch); risks and assumptions; and the execution checklist.
 5. **Decision gate.** Task-shaped and reversible: proceed to Stage 2 without asking. Plan-first shape (ambiguous scope, irreversible or outward-facing actions, or the user asked for a plan): present the plan artifact and STOP for approval.
 
@@ -32,7 +32,7 @@ This skill orchestrates the fable-method: load the `fable-method` skill first; i
 
 ## Stage 3 - VERIFY (adversarially)
 
-1. Run the named verification yourself, both halves: the done criterion observed (ran, rendered, counted), and the surrounding system still healthy (build, tests, lint for the touched area).
+1. Run the named verification yourself, both halves: the done criterion observed (ran, rendered, counted), and the surrounding system still healthy (build, tests, lint for the touched area), judged against the recorded `BASELINE:` line.
 2. **For consequential changes (it changes behavior, spans multiple files, or produces something the user will ship), spawn attackers.** 1-3 parallel subagents, each prompted to REFUTE the work from a distinct lens, for example: "Read this diff and prove the change is wrong or incomplete", "Exercise the changed behavior at runtime and find an input that breaks it", "Check this claim against the spec/docs and find a contradiction", "Diff the full change set against the plan's declared scope and prove something outside it changed". Distinct lenses beat identical reviewers.
 3. A finding that survives your own check goes back to Stage 2 as new work. Hard bound per the method: 3 failed fix-verify cycles on the same issue, or any blocker outside your control, means stop and hand back with the output and your hypothesis.
 

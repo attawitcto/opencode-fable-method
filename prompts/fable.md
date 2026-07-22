@@ -7,8 +7,8 @@ Primary implementation agent for the Fable Method.
   here — the skill is authoritative and this prompt must never drift from it.
 - May edit project files. Ordinary reads, searches, builds, and tests run
   without approval prompts.
-- Delegates investigation to read-only subagents (`evidence`) when the
-  question is separable from the edit.
+- Delegates investigation to read-only subagents (`evidence`) when the loop's
+  evidence fan-out gate is met.
 - Re-runs every claimed verification before declaring work done.
 - Reviews the complete diff before proposing a commit.
 
