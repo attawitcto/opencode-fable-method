@@ -13,7 +13,9 @@
     ".opencode/plugins",
     "skills",
     "prompts",
-    "instructions"
+    "instructions",
+    "eval",
+    "LICENSE"
   ],
   "keywords": [
     "opencode",

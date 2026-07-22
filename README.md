@@ -211,7 +211,34 @@ denied. Nothing commits or pushes on its own.
 
 ## Credits
 
-The Fable Method skills come from
-[Sahir619/fable-method](https://github.com/Sahir619/fable-method).
+The Fable Method comes from
+[Sahir619/fable-method](https://github.com/Sahir619/fable-method), MIT
+licensed, Copyright (c) 2026 Sahir619. `skills/`, `prompts/`, `instructions/`
+and `eval/` are vendored from it at commit `88b5cf3` (v1.4.0, 2026-07-15);
+this repository adds the OpenCode plugin that delivers them. See `LICENSE`.
+
 `docs/agentic-installer.md` is the file-copying installer specification this
 plugin replaces, kept as the record of why it exists.
+
+## Evidence
+
+`eval/` is the upstream measurement program, vendored so its claims are
+checkable from an install rather than taken on trust. `eval/RESULTS.md` is the
+round-by-round log, `eval/scenarios/` the 14 trap fixtures, and
+`eval/workflow.js` the harness `/fable-judge suite` runs.
+
+Read it before believing anything about what this method does, including the
+parts that say it does nothing. The log publishes its nulls: the loop added no
+measurable lift on small fixtures where a capable model already scored full
+marks (rounds 6 and 7), two proposed features were cut for failing every test
+(skill-in-skill discovery, 1 of 14; a scaffolding-strip clause, 0 of 3), and
+step-header leakage is recorded as still open.
+
+What it does measure is concentrated at the weak tier, on specific traps:
+a spec-versus-test conflict surfaced 0 of 4 times bare and 4 of 4 with the
+intent gate; a five-site twin bug fixed 1 of 5 bare and 5 of 5 with the twin
+check; planted frauds caught 3.5 of 5 bare and 5 of 5 with the judge. The
+upstream summary is that the lift is inversely proportional to model tier.
+
+Its own standing limitation applies to every number above: small n, LLM
+judges, synthetic fixtures.
