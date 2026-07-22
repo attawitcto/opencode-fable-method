@@ -149,6 +149,17 @@ const INSPECT_RULES = [
  * project profile allows them.
  */
 const INSPECT_DENIES = [
+  // Shell redirection is the one write a read-only agent can still reach.
+  // OpenCode splits `&&`, `;` and `|` and checks each part, so a chained or
+  // piped writer is already caught (`ls | tee f` and `ls && rm -rf d` are both
+  // refused) — but a redirect target is not a command, so there is nothing for
+  // it to check, and `printf X >> f` runs on the strength of `printf*` alone.
+  // Measured against OpenCode 1.18.4: as `evidence`, `printf PWNED >> canary.txt`
+  // and `echo HELLO > piped2.txt` both wrote their files before this rule
+  // existed, despite `edit: deny`. Denying every `>` costs a read-only agent
+  // only `2>&1`, which it can drop.
+  ['*>*', 'deny'],
+
   ['find *-delete*', 'deny'],
   ['git add*', 'deny'],
   ['git commit*', 'deny'],
