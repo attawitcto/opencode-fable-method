@@ -17,8 +17,8 @@ This skill orchestrates the fable-method: load the `fable-method` skill first; i
    - library or fact questions: a research agent that fetches current docs or searches the web;
    - each subagent returns distilled findings with citations, never raw file dumps.
    One batch plus one follow-up batch is the budget; a third needs a stated reason.
-3. **Spot-check the evidence.** Open one citation behind a fact your plan will depend on from each subagent report (the cited file and line, or the fetched page) and confirm it says what the report claims. A report that cites nothing fails the spot-check outright. A failed spot-check invalidates that report's facts: regather that area yourself in the main thread.
-4. **Produce the plan artifact** in this shape: classification; definition of done plus its verification; evidence found (cited); ONE recommended approach (alternatives dismissed in a line each); the scope (the exact files or surfaces the work will touch); risks and assumptions; and the execution checklist.
+3. **Spot-check the evidence.** Open one citation behind a fact your plan will depend on from each subagent report (the cited file and line, or the fetched page) and confirm it says what the report claims, then write one line per report, verbatim, into the plan artifact: `SPOT-CHECK: <subagent> claimed <the fact> at <citation> - confirmed / contradicted: <what the source actually said>`. A report that cites nothing fails the spot-check outright. A failed spot-check invalidates that report's facts: regather that area yourself in the main thread. No fan-out, no line.
+4. **Produce the plan artifact** in this shape: classification; definition of done plus its verification; evidence found (cited) with its `SPOT-CHECK:` lines; ONE recommended approach (alternatives dismissed in a line each); the scope (the exact files or surfaces the work will touch); risks and assumptions; and the execution checklist.
 5. **Decision gate.** Task-shaped and reversible: proceed to Stage 2 without asking. Plan-first shape (ambiguous scope, irreversible or outward-facing actions, or the user asked for a plan): present the plan artifact and STOP for approval.
 
 ## Stage 2 - EXECUTE
@@ -39,7 +39,7 @@ This skill orchestrates the fable-method: load the `fable-method` skill first; i
 ## Stage 4 - AUDIT and REPORT (the second bookend)
 
 1. Self-audit per fable-method audit mode: for each method step, followed, skipped, or faked. Fix what one pass can fix (usually an unverified claim: verify it now or relabel it a caveat).
-2. Deliver per method Step 6: outcome in the first sentence, verification evidence shown, honest caveats, follow-ups only if they emerged from the work. No stage names or step numbers in the report; the method's artifact lines (INTENT, BASELINE, AUTH, TWINS, PENDING) are the only method artifacts a report may contain.
+2. Deliver per method Step 6: outcome in the first sentence, verification evidence shown, honest caveats, follow-ups only if they emerged from the work. No stage names or step numbers in the report; the method's artifact lines (INTENT, BASELINE, AUTH, TWINS, PENDING) are the only method artifacts a report may contain. `SPOT-CHECK:` belongs to the plan artifact, not the report.
 
 ## When NOT to use this loop
 

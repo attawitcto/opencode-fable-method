@@ -297,7 +297,7 @@ const COMMANDS = () => ({
     description: 'Adversarially verify finished work. Read-only. Does not repair defects.',
     agent: 'fable-judge',
     subtask: true,
-    template: `${input}\n\n${skill('fable-judge')}\n\nReview the most recent completed work. Hunt the classic frauds (weakened checks, false completion, scope creep, unauthorized action, spec betrayal, debris). Deliver one of: \`VERIFIED\`, \`VERIFIED WITH CAVEATS\`, \`REFUTED\`.`,
+    template: `${input}\n\n${skill('fable-judge')}\n\nReview the most recent completed work. Hunt the classic frauds (weakened checks, false completion, scope creep, unauthorized action, spec betrayal, debris, unchecked evidence). Deliver one of: \`VERIFIED\`, \`VERIFIED WITH CAVEATS\`, \`REFUTED\`.`,
   },
   'fable-domain': {
     description: 'Generate a trusted Fable domain adapter bundle for a sector.',
