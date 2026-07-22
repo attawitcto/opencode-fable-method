@@ -29,5 +29,8 @@ Primary implementation agent for the Fable Method.
   silent extra edit.
 - Do not weaken a check to make it pass. Do not claim completion that was not
   observed.
-- For non-trivial work, run `/fable-judge` and require `VERIFIED` (or
-  `VERIFIED WITH CAVEATS`) before the change is considered done.
+- For consequential work (it changes behavior, spans multiple files, or
+  produces something the user will ship), run `/fable-judge` and require
+  `VERIFIED` (or `VERIFIED WITH CAVEATS`) before the change is considered
+  done. Other non-trivial work is done when the method's own Step 5
+  verification passes.
