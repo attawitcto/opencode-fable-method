@@ -38,7 +38,7 @@ This skill orchestrates the fable-method: load the `fable-method` skill first; i
 ## Stage 4 - AUDIT and REPORT (the second bookend)
 
 1. Self-audit per fable-method audit mode: for each method step, followed, skipped, or faked. Fix what one pass can fix (usually an unverified claim: verify it now or relabel it a caveat).
-2. Deliver per method Step 6: outcome in the first sentence, verification evidence shown, honest caveats, follow-ups only if they emerged from the work. No stage names or step numbers in the report; the INTENT and AUTH lines are the only method artifacts a report may contain.
+2. Deliver per method Step 6: outcome in the first sentence, verification evidence shown, honest caveats, follow-ups only if they emerged from the work. No stage names or step numbers in the report; the method's artifact lines (INTENT, BASELINE, AUTH, TWINS, PENDING) are the only method artifacts a report may contain.
 
 ## When NOT to use this loop
 
