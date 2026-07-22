@@ -242,3 +242,34 @@ upstream summary is that the lift is inversely proportional to model tier.
 
 Its own standing limitation applies to every number above: small n, LLM
 judges, synthetic fixtures.
+
+### This fork's own rounds
+
+`eval/RESULTS-opencode-plugin.md` logs what this repository measured about the
+changes it made to the method, kept separate from upstream's log so the two
+provenances never blur. `eval/scenarios-plugin/` holds the two fixtures written
+here; `eval/run-*.sh` are the runners. Executor was MiniMax-M3, not upstream's
+Haiku, so none of these numbers is comparable to `RESULTS.md`.
+
+Five rounds, and the honest summary is that the method carries the result and
+this fork's additions do not measurably improve it:
+
+| round | fixture | result |
+|---|---|---|
+| P1 | `s2` | no regression; `BASELINE:` fired 1 of 2 |
+| P2 | `s5` | 2 of 2 ideal, both twins fixed; `BASELINE:` 2 of 2 |
+| P3 | `p1` | 2 of 2 ideal — and the hypothesis behind the round lost |
+| P4 | `p1`, control arm | method 2, 2 against control **0, 0** |
+| P5 | `p2` | method 2, 2 against control **2, 2** — a null |
+
+P4 is the one real gap, and P5 explains it: `p1` carries upstream's
+spec-versus-test trap, and removing that trap closes the gap entirely. The lift
+belongs to the intent gate, which upstream measured years of rounds ago. The
+`BASELINE:` line this fork added fires reliably where it is owed and makes an
+agent's "that failure was already there" claim checkable rather than asserted,
+but it did not change a single score.
+
+Two rounds also went against the person running them, which is the only reason
+to trust the rest: P3 was built to justify widening a trigger and instead showed
+the trigger was already right, and P5 shows this fork's rules earning nothing on
+the fixture built to isolate them.
