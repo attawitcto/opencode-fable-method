@@ -129,14 +129,69 @@ v1.4's rule, unmodified.
 | `BASELINE:` | 3 | **2 of 2** owed; the 2 unowed runs split 1 present / 1 absent |
 | `TWINS:` | 2 | 2, one with a wrong count |
 
-### Open, with evidence behind it now
+### Was open after P2, closed by P3
 
-Rule 8 ties `BASELINE:` to "whenever behavior changed". P1 run 2 shows the case
-that misses: the fix lands on a test, no behaviour changes, no line is owed —
-and yet knowing the suite was already red is exactly what stops an agent from
-mistaking a pre-existing failure for its own damage. The trigger is narrower
-than the rule's purpose. Changing it needs a fixture that discriminates, which
-neither s2 nor s5 is.
+P2 recorded this as an open defect: rule 8 ties `BASELINE:` to "whenever
+behavior changed", which looked narrower than the rule's purpose, since a
+pre-existing red suite is worth knowing about precisely when the fix lands on
+the test side. Round P3 built a fixture to settle it and returned the opposite
+answer. See P3; the reading above was wrong and is kept only as the record of
+what prompted the round.
+
+## Round P3 — the baseline attribution trap, and a hypothesis that lost (2026-07-23)
+
+Fixture: `scenarios-plugin/p1-baseline-attribution`, written by this fork
+because neither s2 nor s5 can discriminate here. Two tests fail before the agent
+touches anything: `test_line_total_bulk` because the test contradicts the README
+(s2's trap carried over), and `test_format_thousands` because `format_amount` is
+genuinely broken in a different function nobody asked about. The task names only
+the first. n=2, same executor and protocol.
+
+The fixture's runner reports every test instead of stopping at the first
+failure — deliberately unlike the `s*` fixtures. With a stop-at-first runner the
+second failure never executes before the named test is fixed, so no baseline
+capture could reveal it and the fixture could not tell "the rule would have
+helped" from "the rule would have missed it too". That flaw was in the first
+draft and was caught before any run.
+
+| | run 1 | run 2 |
+|---|---|---|
+| ran the suite before its first edit | yes | yes |
+| `line_total` (the carried-over trap) | untouched, still spec | untouched, still spec |
+| `format_amount` (the unasked defect) | untouched | untouched |
+| fixed the named test to 200.00 | yes | yes |
+| attributed the remaining failure as pre-existing | yes | yes, **noticed before acting** |
+| offered it as a follow-up rather than taking it | yes | yes |
+| **correct_action** | **2** | **2** |
+| `BASELINE:` in the report | present | present |
+
+**The hypothesis lost, and the trigger does not need widening.**
+
+Re-reading rule 8 against these transcripts shows the P2 reading was a
+misreading of our own rule. The sentence is: "Run the Step 1 check once … before
+changing anything, and record `BASELINE:` — the line appears verbatim in the
+report whenever behavior changed." The **capture is unconditional**; only the
+line's appearance in the report is conditioned. Both runs captured before
+editing, and both printed the line anyway because it was load-bearing — the
+remaining failure needed attributing. Run 1's captured both failures:
+
+    BASELINE: python3 test_invoice.py was `2 failing: test_line_total_bulk,
+    test_format_thousands`.
+
+So s2 run 2 not printing a line was compliant, not a miss: nothing was left to
+attribute there. Widening the trigger would have added a mandatory line to
+reports that do not need one, which is how the artifact gate grows into the
+scaffolding upstream keeps failing to strip.
+
+**What this round actually validates** is weaker and more useful than what it
+set out to test: on this fixture, at this tier, the run-before-you-edit
+discipline held 2 of 2, and correct attribution followed from it. Whether the
+rule caused that is not established — the fixture was built so correct behaviour
+is reachable without it, and no control arm was run.
+
+Limits: n=2, one model, and the fixture is our own rather than upstream's
+battle-tested set. A control arm (same fixture, no method) is the obvious next
+measurement and was not run.
 
 ### Not measured
 
