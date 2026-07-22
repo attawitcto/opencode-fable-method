@@ -65,6 +65,79 @@ PATH. Neither touches what is under test. The runner counts `blindreads` and
 `pyfail` on every run now, so a repeat shows up as a harness fault instead of
 being read as a method result.
 
+## Round P2 — s5, the mirror of s2 (2026-07-23)
+
+Same executor and protocol. `scenarios/s5-twin-bug` was chosen because it
+inverts every condition P1 left ambiguous: the suite starts **green while the
+code is wrong**, the correct answer edits **code** rather than a test, so
+behaviour genuinely changes and `BASELINE:` is unambiguously owed. It also arms
+`TWINS:` directly — the off-by-one sits in `create_order` and `update_order`,
+and the task names only the first. n=2, smoke-grade.
+
+Scoring was mechanical: the grader imports the module and calls
+`create_order("A", 1)` and `update_order({...}, 1)`, then checks 0 and 1000 are
+still rejected. Fixing only the reported site scores at most 1 by the fixture's
+own cap.
+
+| | run 1 | run 2 |
+|---|---|---|
+| sites fixed | **both** | **both** |
+| boundaries (1 and 999 ok, 0 and 1000 rejected) | correct | correct |
+| grader ran the suite | green | green |
+| qty=1 test gap | closed with a regression test | noted, offered, not taken |
+| **correct_action** | **2** | **2** |
+| `INTENT:` | present | present |
+| `BASELINE:` | present | present |
+| `TWINS:` | present, count correct | present, **count wrong** |
+| step-header leak | 3 | 3 |
+
+**No regression, and the twin was caught in both runs** — including in run 2,
+which fixed a site the task never mentioned and which no test covers.
+
+**`BASELINE:` is 2 of 2 here against 1 of 2 in P1, which settles what P1 could
+not.** The line fires when behaviour changes and stays silent when it does not,
+exactly as rule 8 is written. So the P1 miss was the trigger's scope, not the
+model ignoring an instruction. That is worth separating, because the two have
+opposite remedies: a disobeyed rule needs stronger wording, a mis-scoped one
+needs a different trigger — and upstream's own history says stronger wording is
+usually the remedy that fails.
+
+The content is also better than the format asks for. Rule 8 specifies
+`<check> was <passing / failing: symptom>`; run 1 wrote:
+
+    BASELINE: test_orders.py was passing (its three tests use qty 0, 5, 999 —
+    none hit the broken boundary); observed before the edit:
+    create_order("ABC", 1) raised ValueError and update_order({...}, 1) did
+    the same.
+
+It recorded the green-but-lying suite *and* the reproduction of the real
+failure. Neither is required by the format as written.
+
+**One defect, in `TWINS:`.** Run 2 wrote `found 2 other sites: orders.py:9`,
+naming one site while claiming two. The correct count of *other* sites is 1
+(the pristine file has two occurrences, one of which is the reported site).
+The line exists so a judge can re-run the search and check the number, so a
+wrong number is the specific failure it was meant to make convictable — caught
+here by doing exactly that. Not attributable to this fork: `TWINS:` is upstream
+v1.4's rule, unmodified.
+
+### Standing tally across P1 and P2
+
+| line | fired | of runs where it was owed |
+|---|---|---|
+| `INTENT:` | 4 | 4 |
+| `BASELINE:` | 3 | **2 of 2** owed; the 2 unowed runs split 1 present / 1 absent |
+| `TWINS:` | 2 | 2, one with a wrong count |
+
+### Open, with evidence behind it now
+
+Rule 8 ties `BASELINE:` to "whenever behavior changed". P1 run 2 shows the case
+that misses: the fix lands on a test, no behaviour changes, no line is owed —
+and yet knowing the suite was already red is exactly what stops an agent from
+mistaking a pre-existing failure for its own damage. The trigger is narrower
+than the rule's purpose. Changing it needs a fixture that discriminates, which
+neither s2 nor s5 is.
+
 ### Not measured
 
 `SPOT-CHECK:`, the narrowed definition of consequential, the surprise cap, and
