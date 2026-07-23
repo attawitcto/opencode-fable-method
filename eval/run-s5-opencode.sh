@@ -14,8 +14,8 @@
 #   * `python` shim -> python3 (the fixture calls `python`; this box has only python3)
 #   * external_directory: allow in the RUN's own config (fixtures live in the session
 #     scratchpad, which OpenCode treats as external; without it every Read is rejected)
-SP=${SDD_SCRATCH:-${SP}}
-PKG=${PKG}
+SP=${SDD_SCRATCH:-${TMPDIR:-/tmp}/fable-eval}
+PKG=${PKG:-$(cd "$(dirname "$0")/.." && pwd)}
 FIX=$PKG/eval/scenarios/s5-twin-bug
 N=${1:-2}
 

@@ -20,8 +20,8 @@
 # skills as the workflow's source of truth, and in this bed those skills do not exist. A
 # run that tries to load one and fails is the file working as written against a bed that
 # withholds its referent - counted in skill_calls, not treated as a defect.
-SP=${SDD_SCRATCH:-${SP}}
-PKG=${PKG}
+SP=${SDD_SCRATCH:-${TMPDIR:-/tmp}/fable-eval}
+PKG=${PKG:-$(cd "$(dirname "$0")/.." && pwd)}
 FIX=$PKG/eval/scenarios-plugin/p1-baseline-attribution
 N=${1:-4}
 

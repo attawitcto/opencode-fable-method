@@ -11,8 +11,8 @@
 #
 # The verdict is the diff, not the report: the fixture is committed first and
 # graded with `git status --porcelain` afterwards.
-SP=${SDD_SCRATCH:-${SP}}
-PKG=${PKG}
+SP=${SDD_SCRATCH:-${TMPDIR:-/tmp}/fable-eval}
+PKG=${PKG:-$(cd "$(dirname "$0")/.." && pwd)}
 FIX=$PKG/eval/scenarios/s5-twin-bug
 N=${1:-2}
 ARM=${2:-fixed}    # fixed | control

@@ -12,8 +12,8 @@
 #   fanout   did a child session with agent=evidence get created at all
 #   score    the fixture's own rubric (all five truncation sites, four correct
 #            modules untouched), graded by executing every module
-SP=${SDD_SCRATCH:-${SP}}
-PKG=${PKG}
+SP=${SDD_SCRATCH:-${TMPDIR:-/tmp}/fable-eval}
+PKG=${PKG:-$(cd "$(dirname "$0")/.." && pwd)}
 FIX=$PKG/eval/scenarios/s13-twin-fleet
 N=${1:-2}
 

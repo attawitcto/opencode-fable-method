@@ -18,8 +18,8 @@
 # It is not a bare-model control in upstream's sense. The user's global instructions
 # stay loaded in both arms, so what this measures is the plugin's marginal contribution
 # on this machine, not the method's contribution against nothing.
-SP=${SDD_SCRATCH:-${SP}}
-PKG=${PKG}
+SP=${SDD_SCRATCH:-${TMPDIR:-/tmp}/fable-eval}
+PKG=${PKG:-$(cd "$(dirname "$0")/.." && pwd)}
 FIX=$PKG/eval/scenarios-plugin/p1-baseline-attribution
 N=${1:-2}
 

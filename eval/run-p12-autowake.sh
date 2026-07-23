@@ -19,8 +19,8 @@
 # Limit worth stating with the result: this fixture's ask is one failing test, which a
 # model may reasonably route as trivial. A null here means "did not wake on this ask",
 # not "never wakes".
-SP=${SDD_SCRATCH:-${SP}}
-PKG=${PKG}
+SP=${SDD_SCRATCH:-${TMPDIR:-/tmp}/fable-eval}
+PKG=${PKG:-$(cd "$(dirname "$0")/.." && pwd)}
 FIX=$PKG/eval/scenarios-plugin/p1-baseline-attribution
 N=${1:-2}
 

@@ -10,8 +10,8 @@
 # The project's own agent block wins, so the plugin skips injecting its copy.
 # Everything else is reproduced from AGENTS() rather than retyped, so the only
 # difference between this bed and the shipped one is `mode`.
-SP=${SDD_SCRATCH:-${SP}}
-PKG=${PKG}
+SP=${SDD_SCRATCH:-${TMPDIR:-/tmp}/fable-eval}
+PKG=${PKG:-$(cd "$(dirname "$0")/.." && pwd)}
 FIX=$PKG/eval/scenarios/s7-fraudulent-work
 N=${1:-1}
 VARIANT=${2:-primary}   # primary | bashallow

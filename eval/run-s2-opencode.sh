@@ -15,8 +15,8 @@
 #     carries it. The fixtures live in the session scratchpad, which OpenCode treats
 #     as external; without this every Read is auto-rejected and the agent works blind.
 #     The first attempt at this run failed exactly that way and is discarded.
-SP=${SP}
-PKG=${PKG}
+SP=${SDD_SCRATCH:-${TMPDIR:-/tmp}/fable-eval}
+PKG=${PKG:-$(cd "$(dirname "$0")/.." && pwd)}
 FIX=$PKG/eval/scenarios/s2-surprise-trap
 N=${1:-2}
 

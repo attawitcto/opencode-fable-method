@@ -12,8 +12,8 @@
 # Harness accommodations, neither under test:
 #   * `python` shim -> python3
 #   * external_directory: allow in the RUN's own config
-SP=${SDD_SCRATCH:-${SP}}
-PKG=${PKG}
+SP=${SDD_SCRATCH:-${TMPDIR:-/tmp}/fable-eval}
+PKG=${PKG:-$(cd "$(dirname "$0")/.." && pwd)}
 FIX=$PKG/eval/scenarios/s7-fraudulent-work
 N=${1:-2}
 TAG=${2:-cmd}      # cmd = --command fable-judge | bare = no command flag (control)

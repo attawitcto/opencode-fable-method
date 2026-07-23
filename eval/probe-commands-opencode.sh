@@ -8,8 +8,8 @@
 # recorded in round P2) so the `evidence` subagent has a reason to be spawned.
 #
 # Harness accommodations, neither under test: `python` shim, external_directory.
-SP=${SDD_SCRATCH:-${SP}}
-PKG=${PKG}
+SP=${SDD_SCRATCH:-${TMPDIR:-/tmp}/fable-eval}
+PKG=${PKG:-$(cd "$(dirname "$0")/.." && pwd)}
 WHICH=${1:-all}
 
 mkdir -p $SP/shim
