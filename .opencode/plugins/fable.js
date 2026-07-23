@@ -150,14 +150,15 @@ const INSPECT_RULES = [
  */
 const INSPECT_DENIES = [
   // Shell redirection is the one write a read-only agent can still reach.
-  // OpenCode splits `&&`, `;` and `|` and checks each part, so a chained or
-  // piped writer is already caught (`ls | tee f` and `ls && rm -rf d` are both
-  // refused) - but a redirect target is not a command, so there is nothing for
-  // it to check, and `printf X >> f` runs on the strength of `printf*` alone.
-  // Measured against OpenCode 1.18.4: as `evidence`, `printf PWNED >> canary.txt`
-  // and `echo HELLO > piped2.txt` both wrote their files before this rule
-  // existed, despite `edit: deny`. Denying every `>` costs a read-only agent
-  // only `2>&1`, which it can drop.
+  // This rule catches the simple form and ONLY the simple form: measured in
+  // OpenCode 1.18.4's own log, `python test_converter.py 2>&1` matched `*>*`
+  // and was denied, while `ls pristine/ | sort > /tmp/p.txt` was checked as
+  // bare `sort`, allowed, and wrote the file. The redirect is invisible to the
+  // permission layer whenever anything sits between the command and the
+  // redirect; see the REDIRECT note near the plugin factory for the parser
+  // detail. The `tool.execute.before` hook is what actually closes this, so
+  // this rule is now the second layer rather than the first. Kept because it
+  // costs nothing and still fires first for the shape it does see.
   ['*>*', 'deny'],
 
   ['find *-delete*', 'deny'],
@@ -499,16 +500,57 @@ const doctor = (state) => {
   const overrides = Object.entries(defaults.bash)
     .filter(([k, v]) => project?.bash?.[k] !== undefined && project.bash[k] !== v)
     .map(([k, v]) => `- \`${k}\`: plugin default \`${v}\` → project \`${project.bash[k]}\``)
+  out.push(
+    '\n## Known limits\n\n' +
+      "OpenCode's bash permission check cannot see a shell redirect behind a pipe " +
+      '(`a | b > f` is checked as `b`), so the `*>*` deny above is enforced only for ' +
+      'the unpiped form. Redirection by `evidence` and `fable-judge` is refused by this ' +
+      "plugin's `tool.execute.before` hook instead, which sees the raw command. The " +
+      'table above therefore understates what is blocked for those two agents.',
+  )
   out.push('\n## Project overrides\n')
   out.push(overrides.length ? overrides.join('\n') : 'None - every rule is the plugin default.')
 
   return out.join('\n')
 }
 
+/**
+ * Agents whose read-only guarantee the permission layer cannot actually keep.
+ * See REDIRECT below.
+ */
+const READ_ONLY_AGENTS = new Set(['evidence', 'fable-judge'])
+
+/**
+ * OpenCode's bash permission check cannot see a redirect that sits outside the
+ * command node, so `['*>*', 'deny']` is enforced for `cmd > f` and silently
+ * skipped for `cmd | cmd2 > f`. Read from the binary, in `ShellTool.collect`:
+ *
+ *     patterns.add(Pi(U))   for every `command` descendant U
+ *     Pi = (o) => (o.parent?.type === 'redirected_statement' ? o.parent.text : o.text).trim()
+ *
+ * `Pi` looks exactly one level up. In `a | b > f` tree-sitter-bash wraps the
+ * PIPELINE in the `redirected_statement`, so `b`'s parent is the pipeline and
+ * the redirect is dropped: the string checked is bare `b`. Measured both ways
+ * in OpenCode 1.18.4's own log - `python test_converter.py 2>&1` matched `*>*`
+ * and was denied, while `ls pristine/ | sort > /tmp/p.txt` was checked as
+ * `sort`, allowed, and wrote the file. A read-only agent could write anywhere.
+ *
+ * No permission pattern can close this, because the string the rule is matched
+ * against no longer contains the redirect. The plugin can, because this hook
+ * receives the raw command. Same policy as the `*>*` rule, applied to the text
+ * OpenCode actually runs rather than the text it happens to check.
+ */
+const REDIRECT = />/
+
 export const FableMethod = async (_input, options = {}) => {
   const strict = options.permissionProfile === 'strict'
   const commit = strict ? 'ask' : 'allow'
   const state = { config: null, commit, strict, injected: { agents: [], commands: [] } }
+
+  // `tool.execute.before` is not told which agent is running, but `chat.params`
+  // is, and it fires before any tool call in that session. One entry per
+  // session; sessions are not long-lived enough for this to be worth evicting.
+  const agentOf = new Map()
 
   return {
     tool: {
@@ -521,6 +563,23 @@ export const FableMethod = async (_input, options = {}) => {
           return doctor(state)
         },
       },
+    },
+
+    'chat.params': async ({ sessionID, agent }) => {
+      if (agent) agentOf.set(sessionID, agent)
+    },
+
+    'tool.execute.before': async ({ tool, sessionID }, output) => {
+      if (tool !== 'bash') return
+      if (!READ_ONLY_AGENTS.has(agentOf.get(sessionID))) return
+      const command = String(output?.args?.command ?? '')
+      if (!REDIRECT.test(command)) return
+      throw new Error(
+        'Refused: a read-only Fable agent may not use shell redirection. ' +
+          "OpenCode's permission check does not see a redirect behind a pipe, so this " +
+          'is enforced here instead. Drop the redirect (including `2>&1`) and read the ' +
+          'output directly, or write nothing at all - judging changes nothing.',
+      )
     },
 
     config: async (config) => {

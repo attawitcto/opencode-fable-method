@@ -550,7 +550,60 @@ neither subtask run had done.
 `.github/checks.py` asserts the general rule: no command whose bound agent is
 denied `edit` may set `subtask: true`. Verified by mutation.
 
-### Open defect: the shell-redirect deny does not hold, and the doctor is wrong about it
+### Closed: the shell-redirect hole, traced to OpenCode's parser and fixed in the plugin
+
+The defect below was run down to its cause in OpenCode's binary and closed. The
+original writeup is kept underneath it, including the part that was wrong.
+
+**The parser.** `ShellTool.collect` builds the strings the permission map is
+matched against like this:
+
+    patterns.add(Pi(U))    for every `command` descendant U of the parse tree
+    Pi = (o) => (o.parent?.type === 'redirected_statement' ? o.parent.text : o.text).trim()
+
+`Pi` looks exactly one level up. In `a | b > f`, tree-sitter-bash wraps the
+**pipeline** in the `redirected_statement`, so `b`'s parent is the pipeline and
+the redirect is dropped. In `a > f` the command is the direct child and the
+redirect survives. Both halves are in OpenCode 1.18.4's own log:
+
+    pattern="python test_converter.py 2>&1"  action.pattern=*>*    action.action=deny
+    pattern=sort                             action.pattern=sort*  action.action=allow
+
+The second line is the one that wrote `/tmp/p.txt`. So the earlier claim that
+the rule "does not hold" was half wrong: it holds exactly where the redirect
+survives the parse, and nowhere else. The judge had even hit the working half
+in the same run, retrying without `2>&1` after being denied.
+
+**Why no permission rule can fix it.** The string the rule is matched against no
+longer contains the redirect. Widening the pattern cannot match text that was
+never presented. The only lever that sees the real command is the plugin's own
+`tool.execute.before` hook, which receives the raw `args.command`.
+
+**The fix.** `tool.execute.before` refuses any bash command containing `>` when
+the session's agent is `evidence` or `fable-judge`. The hook is not told which
+agent is running, so `chat.params`, which is, records `sessionID -> agent`
+before any tool call in that session.
+
+Verified with a canary, both directions, n=1 each:
+
+| arm | command | result | canary |
+|---|---|---|---|
+| `fable-judge` | `ls \| sort > /tmp/canary-p8-judge.txt` | **refused** | absent |
+| `fable` | `ls \| sort > /tmp/canary-p8-fable.txt` | allowed | written |
+
+The judge reported the refusal verbatim and noted no part of the command ran.
+The `fable` arm is the control that matters: a hook that blocked everyone would
+break the primary agent's ordinary work, and it does not.
+
+`/fable-doctor` gained a `## Known limits` section saying the permission table
+understates what is blocked for those two agents, because the enforcement moved
+out of the table. The `['*>*', 'deny']` rule is kept as the second layer.
+
+Limits: n=1 per arm, one OpenCode version, and the hook is a blunt `/>/ ` over
+the raw string, so it also refuses `2>&1` - the same cost the permission rule
+already carried and the same one the judge already worked around.
+
+### The original writeup, kept because it was partly wrong
 
 Found by reading run 1's transcript rather than by any counter. The judge ran:
 
@@ -573,10 +626,12 @@ in this shape.
 Two things follow, and the second is worse. The read-only guarantee has a hole:
 `edit: deny` plus a bash allow-list does not stop a redirect. And
 `/fable-doctor` will report `deny` for these commands while OpenCode runs them,
-so the report is confidently wrong. A doctor that disagrees with reality is
-worse than no doctor. Not fixed here: the fix needs OpenCode's actual bash
-parsing pinned down first, and that is a round of its own. Top item for the next
-session, ahead of anything else in this log.
+so the report is confidently wrong.
+
+Corrected above: the parsing was pinned down in the same session rather than
+deferred, and the sentence "the rule does not hold" was too broad. It holds for
+`cmd > f` and fails for `cmd | cmd2 > f`. The doctor was indeed wrong, and now
+says so.
 
 ### A self-inflicted outage, and the check that now catches it
 
