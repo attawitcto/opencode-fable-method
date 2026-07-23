@@ -17,6 +17,10 @@
     "eval",
     "LICENSE"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/attawitcto/opencode-fable-method.git"
+  },
   "keywords": [
     "opencode",
     "opencode-plugin",
