@@ -525,9 +525,13 @@ const doctor = (state) => {
         'and let this plugin\'s granular profile stand, or set the specific rules you actually want.',
     )
   }
-  if (project?.skill && project.skill !== 'allow') {
+  // Resolved for a representative Fable skill name, not compared as a string:
+  // the injected default is a `{ 'fable-*': 'allow' }` map, which is healthy
+  // but not equal to `'allow'`.
+  const skillAction = effective('fable-method', project?.skill)
+  if (skillAction && skillAction !== 'allow') {
     blockers.push(
-      `\`permission.skill\` is \`${JSON.stringify(project.skill)}\`, so loading a \`fable-*\` skill needs approval. ` +
+      `\`permission.skill\` resolves to \`${skillAction}\` for \`fable-*\`, so loading a Fable skill needs approval. ` +
         'Every Fable command begins by loading its skill.',
     )
   }
@@ -676,9 +680,15 @@ export const FableMethod = async (_input, options = {}) => {
         // then Fable cannot load its own skills: every command prompts in the
         // TUI, and `opencode run` auto-rejects the prompt and fails outright.
         // Loading a skill only reads text that ships inside this package, so
-        // it is allowed unless the project has an explicit opinion about
-        // `skill`. Set `"permission": { "skill": "ask" }` to override.
-        config.permission.skill ??= 'allow'
+        // Fable's own skills are allowed unless the project has an explicit
+        // opinion about `skill`. Set `"permission": { "skill": "ask" }` to
+        // override. Scoped to `fable-*` rather than a bare `allow`: the bare
+        // form also overrode the project's rule for every OTHER plugin's
+        // skills, which is not this plugin's grant to make. Skills outside the
+        // pattern keep OpenCode's own default (`allow`) or the project's rule.
+        // Appended after `fill`, so its rules sit last and win last-match over
+        // a project catch-all for exactly the `fable-*` names.
+        config.permission.skill ??= { 'fable-*': 'allow' }
       }
 
       // Kept for fable_doctor, which reports on the config rather than shelling
