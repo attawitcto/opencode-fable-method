@@ -128,6 +128,14 @@ approval prompts. What is gated:
 OpenCode permission maps are **last-match-wins over key order**, so the rules
 are built as an ordered list: broad allows first, specific safeguards after.
 
+Every rule above narrows. This profile declares no catch-all `allow` of its own,
+because a project-level rule outranks an agent's built-in default, and OpenCode
+ships `plan` with `edit` and `bash` set to `ask`. A catch-all silently replaced
+both, which is how `/fable-plan` came to edit files in round P6. One consequence
+is visible: `/fable-plan` runs on the `plan` agent, so its shell commands now
+prompt. In the TUI that is a prompt you answer; under `opencode run`, prompts are
+auto-rejected, so drive plan-only work from `/fable-method plan` there instead.
+
 The one exception carved out of "paths outside the project" is this package's
 own `skills/`. A skill's body reaches the agent through the skill tool, but
 progressive disclosure means a `SKILL.md` only *names* its `references/` files -

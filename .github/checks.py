@@ -329,6 +329,56 @@ try:
 except Exception as e:
     fail(f"external_directory probe: {e}")
 
+# The project profile declares no catch-all `allow`.
+#
+# A rule written at project level outranks an agent's built-in default, and
+# OpenCode ships `plan` with `edit` and `bash` set to `ask`. A catch-all allow
+# grants nothing that OpenCode's own permissive default does not already grant,
+# but it silently replaces that `ask`. Round P6 caught the edit half:
+# `/fable-plan` is advertised plan-only and edited two files. The fix restored
+# `edit` alone, so the bash half survived it - `plan` resolved
+# `echo hi > src/x.ts` to `allow` until the catch-alls came out.
+#
+# Checked structurally rather than by probing `plan`, because the defect is the
+# presence of the rule, not any one command it happens to cover. `deny` and
+# `ask` entries are untouched by this: a rule that narrows cannot widen another
+# agent's default.
+catchall_probe = r"""
+import { permissionInternals } from './.opencode/plugins/fable.js'
+const { projectPermission } = permissionInternals()
+const bad = []
+for (const strict of [false, true]) {
+  const tag = strict ? 'strict' : 'default'
+  const p = projectPermission({ commit: strict ? 'ask' : 'allow', strict })
+  // Two levels only, and never into a pattern's value. A narrow allow is the
+  // point of this profile (`*.env.example`, the package's own `skills/`), so a
+  // scan that walks every leaf flags the carve-outs it exists to protect.
+  if (p['*'] === 'allow') bad.push(`${tag}: permission['*'] is allow`)
+  for (const [key, value] of Object.entries(p)) {
+    if (key === '*') continue
+    if (value === 'allow') bad.push(`${tag}: permission.${key} is a bare allow`)
+    else if (value && typeof value === 'object' && value['*'] === 'allow') {
+      bad.push(`${tag}: permission.${key}['*'] is allow`)
+    }
+  }
+}
+process.stdout.write(bad.join('\n'))
+"""
+try:
+    out = subprocess.run(
+        ["node", "--input-type=module", "-e", catchall_probe],
+        cwd=ROOT, capture_output=True, text=True, timeout=60,
+    )
+    if out.returncode != 0:
+        fail(f"catch-all probe: {out.stderr.strip().splitlines()[-1] if out.stderr.strip() else 'node failed'}")
+    elif out.stdout.strip():
+        for line in out.stdout.strip().splitlines():
+            fail(f"catch-all allow: {line} - it outranks an agent's own default")
+    else:
+        ok("the project profile declares no catch-all allow, in both profiles")
+except Exception as e:
+    fail(f"catch-all probe: {e}")
+
 print()
 if failures:
     print(f"{len(failures)} check(s) failed")

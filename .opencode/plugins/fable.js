@@ -29,10 +29,22 @@ const prompt = (name) => fs.readFileSync(path.join(PKG, 'prompts', `${name}.md`)
  * OpenCode permission maps are last-match-wins over key order, so these are
  * written as ordered pairs: broad allows first, specific safeguards after.
  * Never build one of these with a bare object spread of unordered sources.
+ *
+ * There is deliberately no `['*', 'allow']` here, and none in the read, edit or
+ * top-level maps below. OpenCode already defaults to allow for bash, so that
+ * entry granted nothing - but a rule written at project level outranks an
+ * agent's own default, and OpenCode ships `plan` with `edit` and `bash` set to
+ * `ask`. The catch-all silently replaced both. Round P6 caught the edit half:
+ * `/fable-plan` is advertised plan-only and edited two files. The bash half
+ * outlived the fix, because the fix restored `edit` alone: measured on this
+ * profile, `plan` resolved `echo hi > src/x.ts` and `sed -i s/a/b/ src/x.ts` to
+ * `allow`, so the same guarantee broke through a different tool.
+ *
+ * Declaring only what we intend to change is what closes that class of bug. The
+ * denies and asks below still apply project-wide, because a rule that narrows
+ * cannot resurrect this: it can never widen another agent's default.
  */
 const bashRules = ({ commit, strict }) => [
-  ['*', 'allow'],
-
   ['git commit*', commit],
   ['git push*', 'ask'],
   ['git push --force*', 'deny'],
@@ -219,15 +231,12 @@ const readOnlyBash = (fallback) =>
   toMap([['*', fallback], ...INSPECT_RULES, ...INSPECT_DENIES, ...HARD_ASKS, ...HARD_DENIES])
 
 const projectPermission = ({ commit, strict }) => ({
-  '*': 'allow',
   read: {
-    '*': 'allow',
     '*.env': 'deny',
     '*.env.*': 'deny',
     '*.env.example': 'allow',
   },
   edit: {
-    '*': 'allow',
     '.git/**': 'deny',
     'AGENTS.md': 'ask',
     'opencode.json': 'ask',
@@ -238,7 +247,8 @@ const projectPermission = ({ commit, strict }) => ({
     // The pair to the `external_directory` allow below, and never separable
     // from it: opening this package's skills to the read tool opens them to the
     // edit tool too, and an agent that can rewrite the skill it is running
-    // under is running under no rules. Last in the map, so it outranks `*`.
+    // under is running under no rules. Last in the map, so it outranks every
+    // rule above it and OpenCode's own allow default.
     ...toMap(SKILL_PATHS.map((p) => [p, 'deny'])),
   },
   // `ask` everywhere, except the skill text this plugin itself serves.
@@ -471,6 +481,11 @@ const doctor = (state) => {
   const project = config.permission
   out.push(`\n## Effective bash permissions (profile: ${commit === 'ask' ? 'strict' : 'default'})\n`)
   out.push('Last-match-wins across the project map, then the agent map.\n')
+  out.push(
+    '`inherit` means this plugin declares no rule and OpenCode\'s own default stands: ' +
+      "`allow` for most agents, `ask` for `plan`. That is deliberate. A catch-all here would " +
+      "outrank an agent's built-in default, which is how `/fable-plan` came to edit files.\n",
+  )
   out.push('| command | fable | evidence | fable-judge |')
   out.push('|---|---|---|---|')
   for (const cmd of PROBES) {
