@@ -66,7 +66,7 @@ your working tree is untouched because nothing was ever written to it.
 
 | | |
 |---|---|
-| Agents | `fable` (primary), `evidence` (read-only), `fable-judge` (read-only) |
+| Agents | `fable` (primary), `fable-evidence` (read-only), `fable-judge` (read-only) |
 | Commands | `/fable-loop`, `/fable-method`, `/fable-plan`, `/fable-judge`, `/fable-domain`, `/fable-doctor` |
 | Tools | `fable_doctor` - read-only wiring + permission report, computed in the plugin |
 | Skills | `fable-method`, `fable-loop`, `fable-judge`, `fable-domain` |
@@ -109,7 +109,7 @@ From outside a session, ask OpenCode directly:
 ```bash
 opencode debug config          # agent / command / skills.paths / permission
 opencode debug skill           # confirms the four fable-* skills resolve
-opencode debug agent evidence  # confirms a subagent is read-only
+opencode debug agent fable-evidence  # confirms a subagent is read-only
 ```
 
 Permission rules are last-match-wins, so read the **last** matching entry in
@@ -226,7 +226,7 @@ denied. Nothing commits or pushes on its own.
   an `ask` inside a subagent hangs the run (measured in P6). A write command
   matching none of those shapes - `tee`, `sed -i`, `cp`, `mv`, `find -exec`,
   `xargs` - is therefore stopped only by the agent's prompt, not the
-  permission layer. `evidence` has no such gap: its catch-all is `deny`.
+  permission layer. `fable-evidence` has no such gap: its catch-all is `deny`.
 - `opencode --pure` disables external plugins, which removes Fable entirely.
 - Verified against OpenCode 1.18.4 with `@opencode-ai/plugin` 1.14.48. The
   plugin API is still evolving, so pin both the plugin version and a known

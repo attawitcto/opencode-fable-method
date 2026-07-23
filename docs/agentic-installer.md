@@ -127,7 +127,7 @@ opencode.json
 
 ```text
 .opencode/agents/fable.md
-.opencode/agents/evidence.md
+.opencode/agents/fable-evidence.md
 .opencode/agents/fable-judge.md
 ```
 
@@ -182,7 +182,7 @@ installers that write to ~/.claude/skills/
 * Ordinary `git push` requires approval at execution time
 * Force-push, remote-ref deletion, publish, deploy, outward-facing merge, release, and destructive actions are denied
 
-### `evidence`
+### `fable-evidence`
 
 * Subagent
 * Read-only
@@ -634,7 +634,7 @@ publish/release/destructive deployment patterns: deny
 
 The agent-level values and ordering must agree with the project-level profile.
 
-### Required `evidence.md` behavior
+### Required `fable-evidence.md` behavior
 
 Must include:
 
@@ -1082,7 +1082,7 @@ Core installation succeeds only when:
 * all six commands exist
 * all three agents exist
 * OpenCode loads the expected skills during command tests
-* `evidence` cannot edit files
+* `fable-evidence` cannot edit files
 * `fable-judge` cannot edit files
 * project-level catch-all and bash catch-all are `allow`
 * project-level `git commit*` is `allow`

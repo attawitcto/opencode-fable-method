@@ -9,7 +9,7 @@ loop lives in the skills and is never duplicated here.
 ## Roles
 
 - `fable` - primary implementation agent. Edits allowed.
-- `evidence` - read-only subagent. Investigates project facts and returns the
+- `fable-evidence` - read-only subagent. Investigates project facts and returns the
   required report shape. Cannot edit.
 - `fable-judge` - read-only subagent. Reviews finished work against the loop
   and delivers a verdict. Does not repair defects. Cannot edit.

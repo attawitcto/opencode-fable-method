@@ -105,7 +105,7 @@ const bashRules = ({ commit, strict }) => [
  * Read-only inspection commands, allowed for subagents that must not act.
  *
  * Keep this list generous. A command that is missing here falls through to the
- * agent's catch-all: `evidence` refuses it, and `fable-judge` asks - and an
+ * agent's catch-all: `fable-evidence` refuses it, and `fable-judge` asks - and an
  * approval prompt raised inside a subagent has nowhere to go, so the run hangs
  * rather than failing. `git branch` and `git rev-parse` were the first two to
  * prove it. Anything that writes is denied again below, after these allows.
@@ -294,11 +294,11 @@ const AGENTS = () => ({
     // No permission block: inherits the project profile below, so the two can
     // never drift apart.
   },
-  evidence: {
+  'fable-evidence': {
     description:
       'Read-only investigation subagent for the Fable Method. Gathers project facts and returns the required evidence report. Cannot modify files.',
     mode: 'subagent',
-    prompt: prompt('evidence'),
+    prompt: prompt('fable-evidence'),
     permission: {
       edit: 'deny',
       // Inherited from the project profile as `ask`, which a subagent cannot
@@ -326,7 +326,7 @@ const AGENTS = () => ({
     prompt: prompt('fable-judge'),
     permission: {
       edit: 'deny',
-      // Same reasoning as `evidence`: an `ask` inherited into a subagent is an
+      // Same reasoning as `fable-evidence`: an `ask` inherited into a subagent is an
       // approval nobody can give. But not a bare string: the judge's own skill
       // orders it to open `references/failure-modes.md` and the domain
       // adapters, which live in this package outside the project, and a string
@@ -491,12 +491,12 @@ const doctor = (state) => {
       "`allow` for most agents, `ask` for `plan`. That is deliberate. A catch-all here would " +
       "outrank an agent's built-in default, which is how `/fable-plan` came to edit files.\n",
   )
-  out.push('| command | fable | evidence | fable-judge |')
+  out.push('| command | fable | fable-evidence | fable-judge |')
   out.push('|---|---|---|---|')
   for (const cmd of PROBES) {
     const cell = (agent) =>
       effective(cmd, project?.bash, config.agent?.[agent]?.permission?.bash) ?? 'inherit'
-    out.push(`| \`${cmd}\` | ${cell('fable')} | ${cell('evidence')} | ${cell('fable-judge')} |`)
+    out.push(`| \`${cmd}\` | ${cell('fable')} | ${cell('fable-evidence')} | ${cell('fable-judge')} |`)
   }
 
   out.push('\n## Edit / read gates\n')
@@ -545,13 +545,13 @@ const doctor = (state) => {
     '\n## Known limits\n\n' +
       "OpenCode's bash permission check cannot see a shell redirect behind a pipe " +
       '(`a | b > f` is checked as `b`), so the `*>*` deny above is enforced only for ' +
-      'the unpiped form. Redirection by `evidence` and `fable-judge` is refused by this ' +
+      'the unpiped form. Redirection by `fable-evidence` and `fable-judge` is refused by this ' +
       "plugin's `tool.execute.before` hook instead, which sees the raw command. The " +
       'table above therefore understates what is blocked for those two agents. ' +
       "Separately, `fable-judge`'s bash catch-all is `allow` (an `ask` inside a " +
       'subagent hangs the run), so a write command with no redirect that matches ' +
       'no deny - `tee`, `sed -i`, `cp`, `mv`, `find -exec`, `xargs` - is stopped ' +
-      "only by the agent's prompt, not the permission layer. `evidence` has no " +
+      "only by the agent's prompt, not the permission layer. `fable-evidence` has no " +
       'such gap: its catch-all is `deny`.',
   )
   out.push('\n## Project overrides\n')
@@ -564,7 +564,7 @@ const doctor = (state) => {
  * Agents whose read-only guarantee the permission layer cannot actually keep.
  * See REDIRECT below.
  */
-const READ_ONLY_AGENTS = new Set(['evidence', 'fable-judge'])
+const READ_ONLY_AGENTS = new Set(['fable-evidence', 'fable-judge'])
 
 /**
  * OpenCode's bash permission check cannot see a redirect that sits outside the

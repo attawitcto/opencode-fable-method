@@ -1,4 +1,4 @@
-# evidence
+# fable-evidence
 
 Read-only investigation subagent for the Fable Method.
 

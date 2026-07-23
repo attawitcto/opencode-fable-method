@@ -13,7 +13,7 @@ This skill orchestrates the fable-method: load the `fable-method` skill first; i
 
 1. Apply method Steps 0-3: classify the ask, define done with a named verification, state load-bearing assumptions, and write down the open questions the plan depends on.
 2. **Evidence fan-out - gated.** Fan out only when the evidence surface is wide: the questions you have already written down number three or more, or they mix codebase questions with library/web questions. Below that, read directly in the main thread - a subagent's distilled report loses fidelity that direct reading keeps. When fanning out, spawn the gatherers as parallel subagents in ONE message, never sequentially:
-   - codebase questions: one read-only investigation subagent per distinct area ("how does X work", "what depends on Y"). This plugin ships that agent as `evidence`; on another harness use whatever read-only explorer it provides;
+   - codebase questions: one read-only investigation subagent per distinct area ("how does X work", "what depends on Y"). This plugin ships that agent as `fable-evidence`; on another harness use whatever read-only explorer it provides;
    - library or fact questions: a research agent that fetches current docs or searches the web, where the harness has one;
    - each subagent returns distilled findings with citations, never raw file dumps.
    One batch plus one follow-up batch is the budget; a third needs a stated reason.
