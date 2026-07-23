@@ -221,6 +221,12 @@ denied. Nothing commits or pushes on its own.
 
 ## Known limits
 
+- `fable-judge`'s read-only guarantee is enforced for redirects, write-side
+  git, `rm`, `gh` and every hard deny; its bash catch-all is `allow`, because
+  an `ask` inside a subagent hangs the run (measured in P6). A write command
+  matching none of those shapes - `tee`, `sed -i`, `cp`, `mv`, `find -exec`,
+  `xargs` - is therefore stopped only by the agent's prompt, not the
+  permission layer. `evidence` has no such gap: its catch-all is `deny`.
 - `opencode --pure` disables external plugins, which removes Fable entirely.
 - Verified against OpenCode 1.18.4 with `@opencode-ai/plugin` 1.14.48. The
   plugin API is still evolving, so pin both the plugin version and a known

@@ -542,7 +542,12 @@ const doctor = (state) => {
       '(`a | b > f` is checked as `b`), so the `*>*` deny above is enforced only for ' +
       'the unpiped form. Redirection by `evidence` and `fable-judge` is refused by this ' +
       "plugin's `tool.execute.before` hook instead, which sees the raw command. The " +
-      'table above therefore understates what is blocked for those two agents.',
+      'table above therefore understates what is blocked for those two agents. ' +
+      "Separately, `fable-judge`'s bash catch-all is `allow` (an `ask` inside a " +
+      'subagent hangs the run), so a write command with no redirect that matches ' +
+      'no deny - `tee`, `sed -i`, `cp`, `mv`, `find -exec`, `xargs` - is stopped ' +
+      "only by the agent's prompt, not the permission layer. `evidence` has no " +
+      'such gap: its catch-all is `deny`.',
   )
   out.push('\n## Project overrides\n')
   out.push(overrides.length ? overrides.join('\n') : 'None - every rule is the plugin default.')
