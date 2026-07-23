@@ -187,11 +187,30 @@ const toMap = (pairs) => Object.fromEntries(pairs)
 const HARD_DENIES = bashRules({ commit: 'allow', strict: true }).filter(([, action]) => action === 'deny')
 
 /**
+ * Every `ask` from the main profile, collapsed to `deny` for a read-only
+ * subagent. Two reasons, and they point the same way. A subagent has no UI to
+ * raise an approval prompt in, so an `ask` there does not prompt: it hangs the
+ * run while it looks healthy. And every rule the primary agent hesitates over
+ * is a write (`git rebase`, `terraform apply`, `docker push`), which a
+ * read-only agent must not reach at all.
+ *
+ * This exists because the judge's fallback became `allow`. Under the old `ask`
+ * fallback these landed on `ask` by accident; with `allow` first in the map and
+ * no deny after them they resolved to `allow`, which would have let the judge
+ * rebase the branch it was reviewing. Derived, so a new `ask` added above is
+ * picked up here automatically.
+ */
+// commit: 'ask' so the strict profile's `git commit` is collapsed too.
+const HARD_ASKS = bashRules({ commit: 'ask', strict: true })
+  .filter(([, action]) => action === 'ask')
+  .map(([pattern]) => [pattern, 'deny'])
+
+/**
  * Shell map for an agent that must not act. Order matters: the catch-all, then
  * the inspection allows, then every deny - so a deny always has the last word.
  */
 const readOnlyBash = (fallback) =>
-  toMap([['*', fallback], ...INSPECT_RULES, ...INSPECT_DENIES, ...HARD_DENIES])
+  toMap([['*', fallback], ...INSPECT_RULES, ...INSPECT_DENIES, ...HARD_ASKS, ...HARD_DENIES])
 
 const projectPermission = ({ commit, strict }) => ({
   '*': 'allow',
@@ -249,6 +268,12 @@ const AGENTS = () => ({
     prompt: prompt('evidence'),
     permission: {
       edit: 'deny',
+      // Inherited from the project profile as `ask`, which a subagent cannot
+      // answer. `deny` fails loudly instead of hanging, and neither is a
+      // widening: a read-only agent should not roam outside the project, and a
+      // subagent caught in a loop should be stopped rather than consulted.
+      external_directory: 'deny',
+      doom_loop: 'deny',
       // `edit: deny` does not make the shell read-only, so bash is locked
       // down separately: deny everything, then allow inspection only.
       bash: readOnlyBash('deny'),
@@ -261,6 +286,10 @@ const AGENTS = () => ({
     prompt: prompt('fable-judge'),
     permission: {
       edit: 'deny',
+      // Same reasoning as `evidence`: an `ask` inherited into a subagent is an
+      // approval nobody can give.
+      external_directory: 'deny',
+      doom_loop: 'deny',
       // This was `ask`, so a project could approve its own test/lint/build
       // commands at execution time. It deadlocked the judge instead: a subagent
       // has nowhere to raise the prompt, so `/fable-judge` hung on the first
@@ -530,3 +559,10 @@ export default FableMethod
  * trustworthy if both callers compute it from the same source.
  */
 export { doctor, AGENTS, COMMANDS }
+
+/**
+ * Exported for `.github/checks.py`, which asserts that no subagent resolves to
+ * `ask` on any rule. Shared rather than reimplemented for the same reason the
+ * doctor is: a check that models the resolution differently is not a check.
+ */
+export { projectPermission, effective }

@@ -371,7 +371,27 @@ Every deny below it survives, so the judge remains strictly more restricted than
 the `fable` agent whose work it reviews: no edit tool, no shell redirect, no
 write-side git, and every hard deny.
 
-### The judge, once it can run
+### Addendum: the fix had a hole, and the check that found it
+
+Collapsing the judge's fallback to `allow` fixed the hang and opened something
+worse. The agent map's `*` is consulted before its specific rules, so seven
+patterns the primary profile marks `ask` had no deny after them and resolved to
+**allow** for the judge: `git rebase*`, `git merge*`, `git cherry-pick*`,
+`docker push*`, `terraform apply*`, `kubectl apply*`, `helm upgrade*`. The
+read-only agent could have rebased the branch it was reviewing.
+
+`HARD_ASKS` now collapses every profile `ask` to `deny` for read-only agents,
+derived from `bashRules` the same way `HARD_DENIES` already was, so a new `ask`
+added upstream is picked up automatically.
+
+Both halves are asserted in `.github/checks.py` and cost no model call, because
+"an `ask` inside a subagent cannot be answered" is a static property of the
+config rather than a behaviour to measure. The assertions were verified by
+mutation: reverting the judge's fallback to `ask` reproduces the deadlock report,
+dropping the scalar overrides reports both, and deleting `HARD_ASKS` names all
+seven commands above. The second assertion exists only because the first one
+passed on that mutation, which is the failure a check that cannot fail always
+has.
 
 Same fixture, the shipped config with only that line changed, n=2.
 

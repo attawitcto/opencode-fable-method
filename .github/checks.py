@@ -100,6 +100,69 @@ for name in sorted(os.listdir(scen_dir)):
     else:
         ok(f"eval/scenarios/{name} ({len(entries)} entries)")
 
+# 8. No subagent resolves to `ask` on any rule.
+#
+# A subagent has no UI to raise an approval prompt in, so an `ask` there does
+# not prompt: the run stops while looking healthy. Round P6 lost three
+# /fable-judge runs to exactly that, each ending with a bash tool stuck in
+# `running` on the first command not on the inspect allow-list. This is a
+# static property of the config, so it is checked here rather than measured.
+#
+# Resolution is imported from the plugin instead of re-modelled: a check that
+# resolves permissions differently from the thing it checks is not a check.
+probe = r"""
+import { AGENTS, projectPermission, effective } from './.opencode/plugins/fable.js'
+const bad = []
+const loose = []
+for (const profile of [{ commit: 'allow', strict: false }, { commit: 'ask', strict: true }]) {
+  const proj = projectPermission(profile)
+  for (const [name, agent] of Object.entries(AGENTS())) {
+    if (agent.mode !== 'subagent') continue
+    for (const [key, pv] of Object.entries(proj)) {
+      const av = agent.permission?.[key]
+      if (typeof pv === 'string' || typeof av === 'string') {
+        if ((typeof av === 'string' ? av : pv) === 'ask') bad.push(`${name}.${key}`)
+        continue
+      }
+      const patterns = new Set([...Object.keys(pv), ...Object.keys(av || {})])
+      for (const p of patterns) {
+        // Substitute `*` so the probe string matches the rule that produced it.
+        const probe = p.replace(/\*/g, 'x')
+        const got = effective(probe, pv, av)
+        if (got === 'ask') bad.push(`${name}.${key}: ${p}`)
+        // The other half. Collapsing a subagent's `ask` to `allow` removes the
+        // hang and quietly hands a read-only agent a write command, so a rule
+        // the primary agent will not run unprompted must not become `allow`
+        // here. `*` is the catch-all itself and is the fallback under test.
+        else if (got === 'allow' && p !== '*' && (pv[p] === 'ask' || pv[p] === 'deny')) {
+          loose.push(`${name}.${key}: \`${p}\` is ${pv[p]} for the primary agent but allow here`)
+        }
+      }
+    }
+  }
+}
+process.stdout.write([...new Set(bad.map(b => 'ASK ' + b)), ...new Set(loose.map(l => 'LOOSE ' + l))].join('\n'))
+"""
+try:
+    import subprocess
+    out = subprocess.run(
+        ["node", "--input-type=module", "-e", probe],
+        cwd=ROOT, capture_output=True, text=True, timeout=60,
+    )
+    if out.returncode != 0:
+        fail(f"subagent ask probe: {out.stderr.strip().splitlines()[-1] if out.stderr.strip() else 'node failed'}")
+    elif out.stdout.strip():
+        for line in out.stdout.strip().splitlines():
+            kind, rest = line.split(" ", 1)
+            if kind == "ASK":
+                fail(f"subagent resolves to `ask`, which nothing can answer: {rest}")
+            else:
+                fail(f"subagent is more permissive than the agent it reviews: {rest}")
+    else:
+        ok("no subagent resolves to `ask`, and none outranks the primary profile")
+except Exception as e:
+    fail(f"subagent ask probe: {e}")
+
 print()
 if failures:
     print(f"{len(failures)} check(s) failed")
