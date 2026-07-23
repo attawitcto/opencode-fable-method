@@ -16,6 +16,11 @@ import { fileURLToPath } from 'url'
 
 const PKG = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const SKILLS_DIR = path.join(PKG, 'skills')
+// Both forms: OpenCode's own auto-allows are written with a single `*`, and a
+// single `*` is not guaranteed to cross directory separators. `references/` sits
+// two levels below SKILLS_DIR, so a pattern that does not descend would leave
+// the exact reads this exists for still prompting.
+const SKILL_PATHS = [`${SKILLS_DIR}/*`, `${SKILLS_DIR}/**`]
 const INVARIANTS = path.join(PKG, 'instructions', 'fable-invariants.md')
 
 const prompt = (name) => fs.readFileSync(path.join(PKG, 'prompts', `${name}.md`), 'utf8')
@@ -230,8 +235,25 @@ const projectPermission = ({ commit, strict }) => ({
     '*.env': 'deny',
     '*.env.*': 'deny',
     '*.env.example': 'allow',
+    // The pair to the `external_directory` allow below, and never separable
+    // from it: opening this package's skills to the read tool opens them to the
+    // edit tool too, and an agent that can rewrite the skill it is running
+    // under is running under no rules. Last in the map, so it outranks `*`.
+    ...toMap(SKILL_PATHS.map((p) => [p, 'deny'])),
   },
-  external_directory: 'ask',
+  // `ask` everywhere, except the skill text this plugin itself serves.
+  //
+  // A skill's body arrives through the skill tool and never touches this rule,
+  // but progressive disclosure means SKILL.md only *names* its `references/`
+  // files - the agent opens those with the ordinary read tool, which does hit
+  // this rule. The package lives outside the project, so every one of those
+  // reads prompted. Measured in P11 run 7: `/fable-method` stopped to ask
+  // before it could open `references/failure-modes.md`, a file this plugin
+  // shipped and pointed the agent at itself.
+  //
+  // Scoped to `skills/` rather than the package root, so a checkout of this
+  // repository is still editable by an agent working *on* the plugin.
+  external_directory: toMap([['*', 'ask'], ...SKILL_PATHS.map((p) => [p, 'allow'])]),
   doom_loop: 'ask',
   bash: toMap(bashRules({ commit, strict })),
 })
@@ -663,4 +685,4 @@ export { doctor, AGENTS, COMMANDS }
  * `UnknownError: Unexpected server error` and nothing in the log. Every export
  * here must return an object.
  */
-export const permissionInternals = () => ({ projectPermission, effective })
+export const permissionInternals = () => ({ projectPermission, effective, SKILL_PATHS })

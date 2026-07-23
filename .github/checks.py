@@ -278,6 +278,57 @@ try:
 except Exception as e:
     fail(f"read-only agent probe: {e}")
 
+
+# Every path opened by an `external_directory` allow is closed for editing.
+#
+# `external_directory` gates tool access to paths outside the project, so an
+# allow there opens the path to the edit tool as much as to the read tool. The
+# only allow this profile grants is the package's own `skills/`, so without the
+# matching edit deny an agent could rewrite the skill it is running under, which
+# is a longer way of saying it would be running under no rules. The two are one
+# change and this check is what keeps them that way.
+#
+# Asserted in both directions, because a check that only walks the allows passes
+# when there are none - which is exactly what a revert looks like. So the skills
+# path must BE allowed (the feature is present) and must be denied for edit (the
+# feature is safe). Either half missing is a failure.
+pair_probe = r"""
+import { permissionInternals } from './.opencode/plugins/fable.js'
+const { projectPermission, SKILL_PATHS } = permissionInternals()
+const bad = []
+for (const strict of [false, true]) {
+  const tag = strict ? 'strict' : 'default'
+  const p = projectPermission({ commit: strict ? 'ask' : 'allow', strict })
+  const ext = p.external_directory
+  if (typeof ext !== 'object' || ext === null) {
+    bad.push(`${tag}: external_directory is not a pattern map, so the skills path still prompts`)
+    continue
+  }
+  for (const pattern of SKILL_PATHS) {
+    if (ext[pattern] !== 'allow') bad.push(`${tag}: ${pattern} is not allowed to read`)
+  }
+  for (const [pattern, action] of Object.entries(ext)) {
+    if (action !== 'allow') continue
+    if (p.edit?.[pattern] !== 'deny') bad.push(`${tag}: ${pattern} is readable but not edit-denied`)
+  }
+}
+process.stdout.write(bad.join('\n'))
+"""
+try:
+    out = subprocess.run(
+        ["node", "--input-type=module", "-e", pair_probe],
+        cwd=ROOT, capture_output=True, text=True, timeout=60,
+    )
+    if out.returncode != 0:
+        fail(f"external_directory probe: {out.stderr.strip().splitlines()[-1] if out.stderr.strip() else 'node failed'}")
+    elif out.stdout.strip():
+        for line in out.stdout.strip().splitlines():
+            fail(f"skills path permission: {line}")
+    else:
+        ok("the skills path is readable and edit-denied, in both profiles")
+except Exception as e:
+    fail(f"external_directory probe: {e}")
+
 print()
 if failures:
     print(f"{len(failures)} check(s) failed")

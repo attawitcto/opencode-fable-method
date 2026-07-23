@@ -120,11 +120,21 @@ approval prompts. What is gated:
 
 | | |
 |---|---|
-| `ask` | `git push`, `git reset`, `git rebase`, `git merge`, `rm -r`, `docker push`, `gh pr create` (strict profile: deny), `terraform apply`, `kubectl apply`, paths outside the project, repeated identical calls, edits to `AGENTS.md` / `opencode.json` / `.opencode/**` |
+| `ask` | `git push`, `git reset`, `git rebase`, `git merge`, `rm -r`, `docker push`, `gh pr create` (strict profile: deny), `terraform apply`, `kubectl apply`, paths outside the project **except this package's own `skills/`**, repeated identical calls, edits to `AGENTS.md` / `opencode.json` / `.opencode/**` |
 | `deny` | force-push, remote-ref deletion, `git reset --hard`, `git clean`, `rm -rf`, `sudo`, publish, `gh pr merge` / `gh release create`, `terraform destroy`, `kubectl delete`, reading or editing `.env` files |
 
 OpenCode permission maps are **last-match-wins over key order**, so the rules
 are built as an ordered list: broad allows first, specific safeguards after.
+
+The one exception carved out of "paths outside the project" is this package's
+own `skills/`. A skill's body reaches the agent through the skill tool, but
+progressive disclosure means a `SKILL.md` only *names* its `references/` files -
+the agent opens those with the ordinary read tool, and the package sits outside
+your project, so every one of those reads prompted. That directory is readable
+without a prompt and **editable by nothing**: the read allow and the edit deny
+are installed together, and `checks.py` fails if either half goes missing. An
+agent that could rewrite the skill it is running under would be running under no
+rules.
 
 ### Overriding
 

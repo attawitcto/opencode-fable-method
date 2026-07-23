@@ -914,6 +914,31 @@ This also corrects a claim made earlier in this round's own analysis, that a
 reviewer with edit rights was the certain outcome. It is not; it is a coin toss
 the skill text was leaving to the model.
 
+### The friction run 7 exposed, and its fix
+
+Run 7 stopped to ask before it could open
+`skills/fable-method/references/failure-modes.md` - a file this plugin ships and
+that its own `SKILL.md` points the agent at. The skill *body* was never the
+problem: it arrives through the skill tool, which the plugin already allows, and
+not one of the nine runs prompted for it. Progressive disclosure is what leaks -
+a `SKILL.md` names its `references/` files rather than inlining them, so the
+agent reaches them with the ordinary read tool, and the package is outside the
+project, where the profile says `ask`.
+
+So the plugin registered a skills path for itself and then made the second half
+of that path prompt. Fixed by allowing `external_directory` on `skills/` only,
+paired in the same change with an `edit` deny on the same patterns, because an
+`external_directory` allow opens a path to the edit tool as much as to the read
+tool and an agent that can rewrite the skill it is running under is running under
+nothing. Scoped to `skills/` rather than the package root so a checkout of this
+repository stays editable by an agent working on the plugin.
+
+Asserted in `checks.py` in both directions, and that mattered: the first version
+of the assertion only walked the allows, so it passed cleanly when the feature
+was reverted out from under it - which is what a revert looks like. It now fails
+if the path is not readable, if it is readable but not edit-denied, or if
+`external_directory` regresses to a bare scalar. Verified by all three mutations.
+
 ### Two smaller observations, neither a defect in the plugin
 
 **M3 drops instructions from long command templates.** Run 1's template orders the
