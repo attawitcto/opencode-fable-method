@@ -327,8 +327,13 @@ const AGENTS = () => ({
     permission: {
       edit: 'deny',
       // Same reasoning as `evidence`: an `ask` inherited into a subagent is an
-      // approval nobody can give.
-      external_directory: 'deny',
+      // approval nobody can give. But not a bare string: the judge's own skill
+      // orders it to open `references/failure-modes.md` and the domain
+      // adapters, which live in this package outside the project, and a string
+      // `deny` outranks the project profile's skills carve-out - the plugin
+      // would be denying the judge the fraud catalogue it points it at. Edit
+      // stays denied everywhere by the string above.
+      external_directory: toMap([['*', 'deny'], ...SKILL_PATHS.map((p) => [p, 'allow'])]),
       doom_loop: 'deny',
       // This was `ask`, so a project could approve its own test/lint/build
       // commands at execution time. It deadlocked the judge instead: a subagent

@@ -296,8 +296,8 @@ except Exception as e:
 # path must BE allowed (the feature is present) and must be denied for edit (the
 # feature is safe). Either half missing is a failure.
 pair_probe = r"""
-import { permissionInternals } from './.opencode/plugins/fable.js'
-const { projectPermission, SKILL_PATHS } = permissionInternals()
+import { AGENTS, permissionInternals } from './.opencode/plugins/fable.js'
+const { projectPermission, effective, SKILL_PATHS } = permissionInternals()
 const bad = []
 for (const strict of [false, true]) {
   const tag = strict ? 'strict' : 'default'
@@ -315,6 +315,21 @@ for (const strict of [false, true]) {
     if (p.edit?.[pattern] !== 'deny') bad.push(`${tag}: ${pattern} is readable but not edit-denied`)
   }
 }
+// The judge's own skill names `references/` files inside this package, and an
+// agent-level string `deny` outranks the project carve-out - which is exactly
+// what a revert to the old value looks like. Assert the judge's map keeps the
+// skills paths readable, everything else outside the project denied, and edit
+// denied outright.
+const judgeExt = AGENTS()['fable-judge'].permission
+const projExt = projectPermission({ commit: 'allow', strict: false }).external_directory
+for (const pattern of SKILL_PATHS) {
+  if (effective(pattern.replace(/\*/g, 'x'), projExt, judgeExt.external_directory) !== 'allow')
+    bad.push(`fable-judge: ${pattern} is not readable, so its skill's references are closed to it`)
+}
+if (effective('/elsewhere/x', projExt, judgeExt.external_directory) !== 'deny')
+  bad.push('fable-judge: external paths outside skills/ are not denied')
+if (judgeExt.edit !== 'deny')
+  bad.push('fable-judge: edit is not a hard deny')
 process.stdout.write(bad.join('\n'))
 """
 try:
@@ -328,7 +343,7 @@ try:
         for line in out.stdout.strip().splitlines():
             fail(f"skills path permission: {line}")
     else:
-        ok("the skills path is readable and edit-denied, in both profiles")
+        ok("the skills path is readable and edit-denied, in both profiles and for the judge")
 except Exception as e:
     fail(f"external_directory probe: {e}")
 
