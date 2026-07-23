@@ -2,7 +2,7 @@
 
 The Fable Method for [OpenCode](https://opencode.ai), delivered as a plugin.
 
-Three agents, seven commands, four skills and a permission profile — installed
+Three agents, seven commands, four skills and a permission profile - installed
 by adding one line to `opencode.json`. **No files are copied into your
 repository**, and the plugin writes nothing at startup.
 
@@ -13,7 +13,7 @@ so `git status` stays clean. That is OpenCode, not this plugin.)
 ## Install
 
 **This package is not published yet.** Until it is, install it from a local
-checkout by adding one key to your project's `opencode.json` — merge it into
+checkout by adding one key to your project's `opencode.json` - merge it into
 the file, do not replace the file:
 
 ```json
@@ -26,7 +26,7 @@ A `file:` path is machine-specific, so use it for your own checkout and never
 commit it to a shared repository.
 
 > **Check your existing `permission` block first.** If it contains a
-> catch-all — `"permission": { "*": "ask" }` or `"deny"` — that rule applies
+> catch-all - `"permission": { "*": "ask" }` or `"deny"` - that rule applies
 > to *every* tool including skill loading, so every Fable command will prompt
 > before it can start, and `opencode run` auto-rejects prompts and fails
 > outright. Delete the catch-all and let this plugin's granular profile stand,
@@ -47,7 +47,7 @@ or, added by hand and pinned to a version:
 }
 ```
 
-Either way, restart OpenCode afterwards — config is read once at startup and
+Either way, restart OpenCode afterwards - config is read once at startup and
 is not hot-reloaded.
 
 To prompt on every commit and deny PR creation outright, pass the strict profile:
@@ -70,16 +70,16 @@ your working tree is untouched because nothing was ever written to it.
 |---|---|
 | Agents | `fable` (primary), `evidence` (read-only), `fable-judge` (read-only) |
 | Commands | `/fable`, `/fable-loop`, `/fable-method`, `/fable-plan`, `/fable-judge`, `/fable-domain`, `/fable-doctor` |
-| Tools | `fable_doctor` — read-only wiring + permission report, computed in the plugin |
+| Tools | `fable_doctor` - read-only wiring + permission report, computed in the plugin |
 | Skills | `fable-method`, `fable-loop`, `fable-judge`, `fable-domain` |
-| Instructions | Fable invariants, appended to `instructions` — your `AGENTS.md` is never modified |
+| Instructions | Fable invariants, appended to `instructions` - your `AGENTS.md` is never modified |
 | Permissions | The `critical-only-compromise-v1` profile (below) |
 
 The doctor reports what actually resolved: which agents, commands and skills
 are live and where each came from, the effective permission for representative
 commands **per agent**, the edit/read gates, and every rule your project
-overrode. It is a pure computation over the resolved config — it runs no shell
-commands and reads no files — so it is instant and cannot drift from reality.
+overrode. It is a pure computation over the resolved config - it runs no shell
+commands and reads no files - so it is instant and cannot drift from reality.
 
 Run it from the shell, in the project you want reported on:
 
@@ -100,7 +100,7 @@ replies with a summary instead. The shell command has no such step.
 Two things worth knowing if you script against OpenCode yourself: the doctor's
 last-match-wins resolution is the part `opencode debug config` cannot give you
 (it prints the rules, not their outcome), and `opencode debug config`
-truncates at 65536 bytes when its stdout is a pipe — redirect it to a file.
+truncates at 65536 bytes when its stdout is a pipe - redirect it to a file.
 
 From outside a session, ask OpenCode directly:
 
@@ -128,7 +128,7 @@ are built as an ordered list: broad allows first, specific safeguards after.
 
 ### Overriding
 
-Anything your project defines wins. This plugin only fills gaps — set a rule
+Anything your project defines wins. This plugin only fills gaps - set a rule
 in your own `opencode.json` and it takes effect:
 
 ```json
@@ -149,7 +149,7 @@ outright, pass the profile option instead:
 ## Commit policy
 
 A local commit runs without an extra prompt **only when the task you asked for
-includes committing** — a task that did not ask for a commit does not get one,
+includes committing** - a task that did not ask for a commit does not get one,
 and focused verification plus a full diff review must come first. Pushing
 always asks. Force-push, publish, release and outward-facing merge are denied
 outright.
@@ -157,7 +157,7 @@ outright.
 ## Design invariants
 
 1. **The plugin never writes files.** It mutates the resolved config in
-   memory. Opening OpenCode must leave `git status` unchanged — verified in a
+   memory. Opening OpenCode must leave `git status` unchanged - verified in a
    fresh repository.
 2. **The project always wins.** Agents, commands and permission rules already
    defined by the project are left alone.
@@ -168,13 +168,13 @@ outright.
 ## Effect on your git repository
 
 The plugin writes nothing. Everything it does happens in the resolved config
-in memory, so a session — including live `/fable-*` runs — leaves `git status`
+in memory, so a session - including live `/fable-*` runs - leaves `git status`
 byte-for-byte unchanged.
 
 OpenCode itself is a different matter. On startup it installs plugin
 dependencies into the project at `.opencode/node_modules/` alongside
 `package.json` and `package-lock.json`. This happens **with or without this
-plugin** — removing every `plugin` entry produces the same three paths — so it
+plugin** - removing every `plugin` entry produces the same three paths - so it
 is OpenCode's behaviour, not Fable's.
 
 Whether those show up in `git status` depends on one file:
@@ -258,9 +258,9 @@ this fork's additions do not measurably improve it:
 |---|---|---|
 | P1 | `s2` | no regression; `BASELINE:` fired 1 of 2 |
 | P2 | `s5` | 2 of 2 ideal, both twins fixed; `BASELINE:` 2 of 2 |
-| P3 | `p1` | 2 of 2 ideal — and the hypothesis behind the round lost |
+| P3 | `p1` | 2 of 2 ideal - and the hypothesis behind the round lost |
 | P4 | `p1`, control arm | method 2, 2 against control **0, 0** |
-| P5 | `p2` | method 2, 2 against control **2, 2** — a null |
+| P5 | `p2` | method 2, 2 against control **2, 2** - a null |
 
 P4 is the one real gap, and P5 explains it: `p1` carries upstream's
 spec-versus-test trap, and removing that trap closes the gap entirely. The lift

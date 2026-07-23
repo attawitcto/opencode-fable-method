@@ -3,7 +3,7 @@
  *
  * Delivers agents, commands, skills, project instructions and a permission
  * profile by mutating the resolved config in memory. It installs nothing into
- * the repository and writes no files at startup — opening OpenCode must leave
+ * the repository and writes no files at startup - opening OpenCode must leave
  * `git status` unchanged. Removing this plugin from `opencode.json` removes
  * Fable completely.
  *
@@ -88,7 +88,7 @@ const bashRules = ({ commit, strict }) => [
  * Read-only inspection commands, allowed for subagents that must not act.
  *
  * Keep this list generous. A command that is missing here falls through to the
- * agent's catch-all: `evidence` refuses it, and `fable-judge` asks — and an
+ * agent's catch-all: `evidence` refuses it, and `fable-judge` asks - and an
  * approval prompt raised inside a subagent has nowhere to go, so the run hangs
  * rather than failing. `git branch` and `git rev-parse` were the first two to
  * prove it. Anything that writes is denied again below, after these allows.
@@ -152,7 +152,7 @@ const INSPECT_DENIES = [
   // Shell redirection is the one write a read-only agent can still reach.
   // OpenCode splits `&&`, `;` and `|` and checks each part, so a chained or
   // piped writer is already caught (`ls | tee f` and `ls && rm -rf d` are both
-  // refused) — but a redirect target is not a command, so there is nothing for
+  // refused) - but a redirect target is not a command, so there is nothing for
   // it to check, and `printf X >> f` runs on the strength of `printf*` alone.
   // Measured against OpenCode 1.18.4: as `evidence`, `printf PWNED >> canary.txt`
   // and `echo HELLO > piped2.txt` both wrote their files before this rule
@@ -188,7 +188,7 @@ const HARD_DENIES = bashRules({ commit: 'allow', strict: true }).filter(([, acti
 
 /**
  * Shell map for an agent that must not act. Order matters: the catch-all, then
- * the inspection allows, then every deny — so a deny always has the last word.
+ * the inspection allows, then every deny - so a deny always has the last word.
  */
 const readOnlyBash = (fallback) =>
   toMap([['*', fallback], ...INSPECT_RULES, ...INSPECT_DENIES, ...HARD_DENIES])
@@ -264,7 +264,7 @@ const AGENTS = () => ({
       // Unknown commands ask rather than deny, so a project can approve its
       // own test/lint/build commands at execution time without this plugin
       // guessing which package-manager scripts are safe to run. The hard
-      // denies still apply — `ask` must never become an approval path for
+      // denies still apply - `ask` must never become an approval path for
       // publishing or a destructive command.
       bash: readOnlyBash('ask'),
     },
@@ -296,7 +296,7 @@ const COMMANDS = () => ({
   'fable-method': {
     description: 'Run the Fable Method on a task (method only, no orchestration).',
     agent: 'fable',
-    template: `${input}\n\n${skill('fable-method')}\n\nApply the method's steps literally. Subcommands:\n- \`plan <task>\` — Steps 0-3 only, stop after the plan.\n- \`audit\` — grade finished work against the loop.\n- \`report\` — rewrite the answer you were about to send per Step 6.`,
+    template: `${input}\n\n${skill('fable-method')}\n\nApply the method's steps literally. Subcommands:\n- \`plan <task>\` - Steps 0-3 only, stop after the plan.\n- \`audit\` - grade finished work against the loop.\n- \`report\` - rewrite the answer you were about to send per Step 6.`,
   },
   'fable-plan': {
     description: 'Produce a Fable Method plan for the task. Plan-only. Does not edit files.',
@@ -313,20 +313,20 @@ const COMMANDS = () => ({
   'fable-domain': {
     description: 'Generate a trusted Fable domain adapter bundle for a sector.',
     agent: 'fable',
-    template: `${input}\n\n${skill('fable-domain')}\n\nApply the skill's stages literally: discussion, research, generation, and trap+smoke. Do not generate an adapter for sectors that the red-lines exclude (medical/clinical, legal advice, specific financial buy/sell, mental health, safety-critical engineering). Do not generate an adapter for sectors whose nouns do not differ from the coding default — those are covered by the method itself.`,
+    template: `${input}\n\n${skill('fable-domain')}\n\nApply the skill's stages literally: discussion, research, generation, and trap+smoke. Do not generate an adapter for sectors that the red-lines exclude (medical/clinical, legal advice, specific financial buy/sell, mental health, safety-critical engineering). Do not generate an adapter for sectors whose nouns do not differ from the coding default - those are covered by the method itself.`,
   },
   'fable-doctor': {
     description: 'Report how Fable is wired into this project. Read-only.',
     agent: 'fable',
     template:
-      'Call the `fable_doctor` tool. Your reply is its output reproduced in full — every heading and every table row, unchanged and unsummarised. The tables are the deliverable; a summary of them is not. After reproducing the report, and only then, add at most two sentences calling out anything under `## ⚠ Blocking`, any row reading **NO**, or any permission that contradicts the stated policy. Run no commands and read no files.',
+      'Call the `fable_doctor` tool. Your reply is its output reproduced in full - every heading and every table row, unchanged and unsummarised. The tables are the deliverable; a summary of them is not. After reproducing the report, and only then, add at most two sentences calling out anything under `## ⚠ Blocking`, any row reading **NO**, or any permission that contradicts the stated policy. Run no commands and read no files.',
   },
 })
 
 /**
  * Glob match for OpenCode permission patterns, which use `*` only.
  * Permission maps are last-match-wins over key order, so the scan keeps the
- * last hit rather than returning on the first — the single most common way to
+ * last hit rather than returning on the first - the single most common way to
  * misread these rules is to stop at the first match.
  */
 const matches = (pattern, cmd) =>
@@ -360,10 +360,13 @@ const PROBES = [
 
 const doctor = (state) => {
   const { config, injected, commit, strict } = state
-  if (!config) return 'fable-doctor: the config hook has not run yet — restart OpenCode.'
+  if (!config) return 'fable-doctor: the config hook has not run yet - restart OpenCode.'
 
-  const agents = ['fable', 'evidence', 'fable-judge']
-  const commands = ['fable', 'fable-loop', 'fable-method', 'fable-plan', 'fable-judge', 'fable-domain']
+  // Derived, not listed: a hardcoded list silently drops a command the plugin
+  // injects. `fable-doctor` was missing from it, so the doctor never reported
+  // on itself.
+  const agents = Object.keys(AGENTS())
+  const commands = Object.keys(COMMANDS())
   const skills = ['fable-method', 'fable-loop', 'fable-judge', 'fable-domain']
   const out = []
 
@@ -416,7 +419,7 @@ const doctor = (state) => {
   const catchAll = typeof project === 'string' ? project : project?.['*']
   if (catchAll && catchAll !== 'allow') {
     blockers.push(
-      `\`permission."*"\` is \`${catchAll}\`. It applies to every tool — reads, greps, skill loads — ` +
+      `\`permission."*"\` is \`${catchAll}\`. It applies to every tool - reads, greps, skill loads - ` +
         'so each one prompts, and `opencode run` auto-rejects prompts and fails. Remove the catch-all ' +
         'and let this plugin\'s granular profile stand, or set the specific rules you actually want.',
     )
@@ -438,7 +441,7 @@ const doctor = (state) => {
     .filter(([k, v]) => project?.bash?.[k] !== undefined && project.bash[k] !== v)
     .map(([k, v]) => `- \`${k}\`: plugin default \`${v}\` → project \`${project.bash[k]}\``)
   out.push('\n## Project overrides\n')
-  out.push(overrides.length ? overrides.join('\n') : 'None — every rule is the plugin default.')
+  out.push(overrides.length ? overrides.join('\n') : 'None - every rule is the plugin default.')
 
   return out.join('\n')
 }
@@ -452,7 +455,7 @@ export const FableMethod = async (_input, options = {}) => {
     tool: {
       fable_doctor: {
         description:
-          'Report how Fable is wired into this project: which agents, commands and skills resolved, the effective permission for representative commands per agent, and which rules the project overrode. Read-only, computed from the resolved config — runs no commands.',
+          'Report how Fable is wired into this project: which agents, commands and skills resolved, the effective permission for representative commands per agent, and which rules the project overrode. Read-only, computed from the resolved config - runs no commands.',
         args: {},
         execute: async (_args, ctx) => {
           ctx?.metadata?.({ title: 'Fable wiring report' })
@@ -488,7 +491,7 @@ export const FableMethod = async (_input, options = {}) => {
       }
 
       // Permissions: a project that set `permission` to a bare string has made
-      // a deliberate blanket choice — leave it alone.
+      // a deliberate blanket choice - leave it alone.
       if (typeof config.permission !== 'string') {
         config.permission = fill(projectPermission({ commit, strict }), config.permission)
 

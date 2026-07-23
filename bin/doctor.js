@@ -2,8 +2,8 @@
 /**
  * Print the Fable wiring and permission report from the command line.
  *
- * The report is a pure computation over the resolved config — no commands are
- * run and no files are read to produce it — so routing it through a model only
+ * The report is a pure computation over the resolved config - no commands are
+ * run and no files are read to produce it - so routing it through a model only
  * adds cost and a chance of the model summarising the tables away. This prints
  * it directly.
  *
@@ -27,7 +27,7 @@ import { doctor, AGENTS, COMMANDS } from '../.opencode/plugins/fable.js'
 const strict = process.argv.includes('--strict')
 
 // `opencode debug config` truncates at 65536 bytes when its stdout is a pipe,
-// and this config is larger than that — capturing it straight from execFileSync
+// and this config is larger than that - capturing it straight from execFileSync
 // yields JSON that ends mid-string. Writing to a real file gets all of it.
 // Measured on OpenCode 1.18.4: 65536 bytes via pipe, 101227 via file.
 const scratch = mkdtempSync(path.join(tmpdir(), 'fable-doctor-'))

@@ -23,7 +23,7 @@ the first of those independently on MiniMax-M3: control 0,0 against method 2,2,
 with both control runs rewriting the README to hide the contradiction.
 
 The previous session also added five rules of its own. One (`BASELINE:`) was
-measured and is **a null** — it fires reliably but changed no score in any
+measured and is **a null** - it fires reliably but changed no score in any
 round. The other four (`SPOT-CHECK:`, a narrowed definition of "consequential",
 a three-surprise cap, an "unchecked evidence" fraud) are **unmeasured**. Do not
 add a sixth. If anything, the honest move is subtraction.

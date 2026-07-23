@@ -6,7 +6,7 @@ Read-only adversarial verification subagent for the Fable Method.
 - Reviews diffs, claims, tests, scope, and evidence.
 - Hunts the classic frauds: weakened checks, false completion, scope creep,
   unauthorized action, spec betrayal, debris, unchecked evidence.
-- Does not repair defects. Editing is denied — report, do not fix.
+- Does not repair defects. Editing is denied - report, do not fix.
 - May run the project's own verification commands (focused tests, linters,
   type checks, builds). Unknown commands require approval.
 - Push, publish, deploy, outward-facing merge, release, and destructive

@@ -4,9 +4,9 @@
 
 **Goal:** Close the five gaps found in the Fable 5 instinct review: baseline capture, the non-trivial/consequential inconsistency, the unconditional evidence fan-out, the implicit budget reset, and the `gh pr create` hard deny.
 
-**Architecture:** Four tasks are surgical prose edits to the skill/prompt/instruction markdown files (the method is prose — its "code" is exact wording). One task is a small conditional in `.opencode/plugins/fable.js` plus its README row. No new files, no new dependencies.
+**Architecture:** Four tasks are surgical prose edits to the skill/prompt/instruction markdown files (the method is prose - its "code" is exact wording). One task is a small conditional in `.opencode/plugins/fable.js` plus its README row. No new files, no new dependencies.
 
-**Tech Stack:** Markdown, plain ESM JavaScript (no build step, no test framework in this repo — verification is grep plus a node one-liner that exercises the plugin's `config` hook).
+**Tech Stack:** Markdown, plain ESM JavaScript (no build step, no test framework in this repo - verification is grep plus a node one-liner that exercises the plugin's `config` hook).
 
 ## Global Constraints
 
@@ -14,7 +14,7 @@
 - The project always wins: `fill()` semantics and the project-override behavior must not change.
 - OpenCode permission maps are last-match-wins over key order; never reorder existing rules, only change actions in place.
 - Match the existing prose style of each file exactly (sentence-style bold leads, em-dash rhythm, no step-number scaffolding leaking into report guidance).
-- The working tree already has uncommitted changes (`README.md` +34 lines, untracked `CLAUDE.md`). Stage ONLY the files each task names — never `git add -A` / `git add .`.
+- The working tree already has uncommitted changes (`README.md` +34 lines, untracked `CLAUDE.md`). Stage ONLY the files each task names - never `git add -A` / `git add .`.
 - TDD does not apply to prose edits; each task's check is a grep (or node run) with the expected output stated.
 
 ## Amendments (approved mid-execution)
@@ -24,7 +24,7 @@ Where the task text below differs, these govern:
 
 - **Task 3, item 2 threshold:** `Fan out only when the evidence surface is wide: the questions you have already written down number three or more, or they mix codebase questions with library/web questions.`
 - **Task 3, item 3 in full:** `3. **Spot-check the evidence.** Open one citation behind a fact your plan will depend on from each subagent report (the cited file and line, or the fetched page) and confirm it says what the report claims. A report that cites nothing fails the spot-check outright. A failed spot-check invalidates that report's facts: regather that area yourself in the main thread.`
-- **Task 4, appended sentence:** `A surprise (rule 7) resets the budget: the question it raised gets its own two rounds. The reset is not unlimited — a third surprise on the same task means stop and hand back what you have, like any other hard bound.`
+- **Task 4, appended sentence:** `A surprise (rule 7) resets the budget: the question it raised gets its own two rounds. The reset is not unlimited - a third surprise on the same task means stop and hand back what you have, like any other hard bound.`
 
 A final whole-branch review then found contradictions with files these tasks did
 not touch; the fixes are in the branch's last commit.
@@ -35,18 +35,18 @@ not touch; the fixes are in the branch's last commit.
 
 **Files:**
 - Modify: `skills/fable-method/SKILL.md` (Step 2 rules, Step 5(b), Step 6 bullet 1, Step 6 artifact gate)
-- Modify: `skills/fable-loop/SKILL.md` (Stage 4.2 — also fixes its existing omission of TWINS/PENDING)
+- Modify: `skills/fable-loop/SKILL.md` (Stage 4.2 - also fixes its existing omission of TWINS/PENDING)
 - Modify: `skills/fable-judge/SKILL.md` (False completion bullet)
 
 **Interfaces:**
-- Produces: the verbatim artifact line format `BASELINE: <check> was <passing / failing: symptom>` — Task 2 and later docs refer to artifact lines collectively; the canonical list becomes INTENT, BASELINE, AUTH, TWINS, PENDING.
+- Produces: the verbatim artifact line format `BASELINE: <check> was <passing / failing: symptom>` - Task 2 and later docs refer to artifact lines collectively; the canonical list becomes INTENT, BASELINE, AUTH, TWINS, PENDING.
 
 - [ ] **Step 1: Add Step 2 rule 8 in `skills/fable-method/SKILL.md`**
 
 After the line ending `Otherwise report it and continue.` (end of rule 7, Step 2), append a new list item:
 
 ```markdown
-8. **Capture the baseline before the first edit.** Run the Step 1 check once (or the narrowest command it depends on: the failing test, the build, the lint for the touched area) before changing anything, and record `BASELINE: <check> was <passing / failing: symptom>` — the line appears verbatim in the report whenever behavior changed. A failure that pre-exists your work is a surprise (rule 7): report it and route; never silently adopt it as damage you caused, and never silently expand scope to fix it.
+8. **Capture the baseline before the first edit.** Run the Step 1 check once (or the narrowest command it depends on: the failing test, the build, the lint for the touched area) before changing anything, and record `BASELINE: <check> was <passing / failing: symptom>` - the line appears verbatim in the report whenever behavior changed. A failure that pre-exists your work is a surprise (rule 7): report it and route; never silently adopt it as damage you caused, and never silently expand scope to fix it.
 ```
 
 - [ ] **Step 2: Amend Step 5(b) in the same file**
@@ -60,7 +60,7 @@ Replace:
 with:
 
 ```markdown
-- **(b)** the surrounding system still works: existing tests, build, or lint for the touched area, judged against the recorded `BASELINE:` line — a check that was already failing before your first edit is a pre-existing condition to report, not a regression you caused. A green targeted check with a broken build is a failed verification.
+- **(b)** the surrounding system still works: existing tests, build, or lint for the touched area, judged against the recorded `BASELINE:` line - a check that was already failing before your first edit is a pre-existing condition to report, not a regression you caused. A green targeted check with a broken build is a failed verification.
 ```
 
 - [ ] **Step 3: Update Step 6 bullet 1 (allowed artifacts list) in the same file**
@@ -77,7 +77,7 @@ with:
 the only method artifacts that belong in a report are the INTENT and BASELINE lines when behavior changed, the AUTH line when an outward action was taken, the TWINS line when a defect was fixed, and the PENDING line when a prescribed follow-up was deliberately not taken.
 ```
 
-(This also fixes the pre-existing omission of TWINS from this list — Step 5(c) already requires it verbatim in the report.)
+(This also fixes the pre-existing omission of TWINS from this list - Step 5(c) already requires it verbatim in the report.)
 
 - [ ] **Step 4: Extend the Step 6 artifact gate in the same file**
 
@@ -216,7 +216,7 @@ git commit -m "fix(method): define consequential once and scope the judge requir
 ### Task 3: Gate the evidence fan-out and spot-check evidence reports
 
 **Files:**
-- Modify: `skills/fable-loop/SKILL.md` (Stage 1 item 2; insert a new item 3; renumber old items 3–4 to 4–5)
+- Modify: `skills/fable-loop/SKILL.md` (Stage 1 item 2; insert a new item 3; renumber old items 3-4 to 4-5)
 
 - [ ] **Step 1: Gate the fan-out (Stage 1 item 2)**
 
@@ -229,7 +229,7 @@ Replace:
 with:
 
 ```markdown
-2. **Evidence fan-out — gated.** Fan out only when the evidence surface is wide: three or more independent areas, or codebase questions mixed with library/web questions. Below that, read directly in the main thread — a subagent's distilled report loses fidelity that direct reading keeps. When fanning out, spawn the gatherers as parallel subagents in ONE message, never sequentially:
+2. **Evidence fan-out - gated.** Fan out only when the evidence surface is wide: three or more independent areas, or codebase questions mixed with library/web questions. Below that, read directly in the main thread - a subagent's distilled report loses fidelity that direct reading keeps. When fanning out, spawn the gatherers as parallel subagents in ONE message, never sequentially:
 ```
 
 - [ ] **Step 2: Insert the spot-check as new item 3, renumber the rest**
@@ -244,8 +244,8 @@ Then renumber `3. **Produce the plan artifact**` → `4.` and `4. **Decision gat
 
 - [ ] **Step 3: Verify**
 
-Run: `grep -n "^[0-9]\." skills/fable-loop/SKILL.md | sed -n '/Stage 1/,$p'` — simpler: `awk '/## Stage 1/,/## Stage 2/' skills/fable-loop/SKILL.md | grep -n "^[0-9]\."`
-Expected: items numbered 1–5, with 3 = Spot-check, 4 = Produce the plan artifact, 5 = Decision gate.
+Run: `grep -n "^[0-9]\." skills/fable-loop/SKILL.md | sed -n '/Stage 1/,$p'` - simpler: `awk '/## Stage 1/,/## Stage 2/' skills/fable-loop/SKILL.md | grep -n "^[0-9]\."`
+Expected: items numbered 1-5, with 3 = Spot-check, 4 = Produce the plan artifact, 5 = Decision gate.
 
 - [ ] **Step 4: Commit**
 
@@ -289,7 +289,7 @@ git commit -m "fix(method): state explicitly that a surprise resets the lookup b
 
 ---
 
-### Task 5: `gh pr create` — `ask` by default, `deny` only under the strict profile
+### Task 5: `gh pr create` - `ask` by default, `deny` only under the strict profile
 
 **Files:**
 - Modify: `.opencode/plugins/fable.js` (bashRules signature + rule, HARD_DENIES, projectPermission, FableMethod state, doctor, PROBES)
@@ -297,7 +297,7 @@ git commit -m "fix(method): state explicitly that a surprise resets the lookup b
 
 **Interfaces:**
 - Consumes: nothing from other tasks (independent).
-- Produces: `bashRules({ commit, strict })` and `projectPermission({ commit, strict })` — both callers inside `fable.js` are updated in this task; no external consumers exist.
+- Produces: `bashRules({ commit, strict })` and `projectPermission({ commit, strict })` - both callers inside `fable.js` are updated in this task; no external consumers exist.
 
 - [ ] **Step 1: Thread a `strict` flag through `fable.js`**
 

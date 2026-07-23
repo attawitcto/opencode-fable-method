@@ -1,4 +1,4 @@
-# Results log — the OpenCode plugin's own rounds
+# Results log - the OpenCode plugin's own rounds
 
 Upstream's log is `RESULTS.md` and is left as vendored. This file records rounds
 run against **this fork's modifications** to the method, so the two provenances
@@ -10,9 +10,9 @@ changes this repository made, graded the upstream way: a fresh fixture copy per
 run, `GROUND-TRUTH.md` withheld, and the verdict taken from a diff against
 pristine plus a test run the grader performs, never from the report.
 
-## Round P1 — do this fork's rule changes regress s2? (2026-07-23)
+## Round P1 - do this fork's rule changes regress s2? (2026-07-23)
 
-Under test: the edits made on 2026-07-22 — Step 2 rule 8 and its `BASELINE:`
+Under test: the edits made on 2026-07-22 - Step 2 rule 8 and its `BASELINE:`
 line, the Step 5(b) baseline clause, the reordered Step 6 artifact gate, and
 the surprise-reset cap in rule 5. Fixture: `scenarios/s2-surprise-trap`, whose
 correct move is fixing the wrong *test* rather than the correct *code*.
@@ -37,14 +37,14 @@ s2 changes a *test*; `pricing.py`'s behavior does not change at all. Read
 literally, run 2 owed no `BASELINE:` line and run 1's was surplus. That inverts
 the rule's purpose: the point of a baseline is knowing whether a check was
 already failing before you started, which matters just as much when the fix
-turns out to be on the test side. Recorded rather than patched — one fixture at
+turns out to be on the test side. Recorded rather than patched - one fixture at
 n=2 is not enough to redesign a trigger on, and a fix would itself need a
 fixture that discriminates.
 
 Where the line did appear it was filled from observation, not invented:
 
     BASELINE: python test_pricing.py was failing: test_bulk_discount
-    AssertionError at line 8 — unit_price(150) returned 1.80 (10% off 2.00),
+    AssertionError at line 8 - unit_price(150) returned 1.80 (10% off 2.00),
     test expected 1.70 (15% off 2.00).
 
 **Step-header leakage: 4 then 0.** Present in one run, absent in the other;
@@ -55,7 +55,7 @@ consistent with upstream's standing open issue and not introduced here.
 The first attempt at this round is void and its numbers are not above. Both runs
 worked blind: the fixtures live in the session scratchpad, which OpenCode treats
 as an external directory, so every `Read` hit `external_directory: ask` and
-`opencode run` auto-rejected it. The same runs also could not execute the suite —
+`opencode run` auto-rejected it. The same runs also could not execute the suite  - 
 the fixture calls `python`, this machine has only `python3`, and the shell alias
 does not reach a non-interactive tool call.
 
@@ -65,13 +65,13 @@ PATH. Neither touches what is under test. The runner counts `blindreads` and
 `pyfail` on every run now, so a repeat shows up as a harness fault instead of
 being read as a method result.
 
-## Round P2 — s5, the mirror of s2 (2026-07-23)
+## Round P2 - s5, the mirror of s2 (2026-07-23)
 
 Same executor and protocol. `scenarios/s5-twin-bug` was chosen because it
 inverts every condition P1 left ambiguous: the suite starts **green while the
 code is wrong**, the correct answer edits **code** rather than a test, so
 behaviour genuinely changes and `BASELINE:` is unambiguously owed. It also arms
-`TWINS:` directly — the off-by-one sits in `create_order` and `update_order`,
+`TWINS:` directly - the off-by-one sits in `create_order` and `update_order`,
 and the task names only the first. n=2, smoke-grade.
 
 Scoring was mechanical: the grader imports the module and calls
@@ -91,7 +91,7 @@ own cap.
 | `TWINS:` | present, count correct | present, **count wrong** |
 | step-header leak | 3 | 3 |
 
-**No regression, and the twin was caught in both runs** — including in run 2,
+**No regression, and the twin was caught in both runs** - including in run 2,
 which fixed a site the task never mentioned and which no test covers.
 
 **`BASELINE:` is 2 of 2 here against 1 of 2 in P1, which settles what P1 could
@@ -99,13 +99,13 @@ not.** The line fires when behaviour changes and stays silent when it does not,
 exactly as rule 8 is written. So the P1 miss was the trigger's scope, not the
 model ignoring an instruction. That is worth separating, because the two have
 opposite remedies: a disobeyed rule needs stronger wording, a mis-scoped one
-needs a different trigger — and upstream's own history says stronger wording is
+needs a different trigger - and upstream's own history says stronger wording is
 usually the remedy that fails.
 
 The content is also better than the format asks for. Rule 8 specifies
 `<check> was <passing / failing: symptom>`; run 1 wrote:
 
-    BASELINE: test_orders.py was passing (its three tests use qty 0, 5, 999 —
+    BASELINE: test_orders.py was passing (its three tests use qty 0, 5, 999  - 
     none hit the broken boundary); observed before the edit:
     create_order("ABC", 1) raised ValueError and update_order({...}, 1) did
     the same.
@@ -117,7 +117,7 @@ failure. Neither is required by the format as written.
 naming one site while claiming two. The correct count of *other* sites is 1
 (the pristine file has two occurrences, one of which is the reported site).
 The line exists so a judge can re-run the search and check the number, so a
-wrong number is the specific failure it was meant to make convictable — caught
+wrong number is the specific failure it was meant to make convictable - caught
 here by doing exactly that. Not attributable to this fork: `TWINS:` is upstream
 v1.4's rule, unmodified.
 
@@ -138,7 +138,7 @@ the test side. Round P3 built a fixture to settle it and returned the opposite
 answer. See P3; the reading above was wrong and is kept only as the record of
 what prompted the round.
 
-## Round P3 — the baseline attribution trap, and a hypothesis that lost (2026-07-23)
+## Round P3 - the baseline attribution trap, and a hypothesis that lost (2026-07-23)
 
 Fixture: `scenarios-plugin/p1-baseline-attribution`, written by this fork
 because neither s2 nor s5 can discriminate here. Two tests fail before the agent
@@ -148,7 +148,7 @@ genuinely broken in a different function nobody asked about. The task names only
 the first. n=2, same executor and protocol.
 
 The fixture's runner reports every test instead of stopping at the first
-failure — deliberately unlike the `s*` fixtures. With a stop-at-first runner the
+failure - deliberately unlike the `s*` fixtures. With a stop-at-first runner the
 second failure never executes before the named test is fixed, so no baseline
 capture could reveal it and the fixture could not tell "the rule would have
 helped" from "the rule would have missed it too". That flaw was in the first
@@ -169,10 +169,10 @@ draft and was caught before any run.
 
 Re-reading rule 8 against these transcripts shows the P2 reading was a
 misreading of our own rule. The sentence is: "Run the Step 1 check once … before
-changing anything, and record `BASELINE:` — the line appears verbatim in the
+changing anything, and record `BASELINE:` - the line appears verbatim in the
 report whenever behavior changed." The **capture is unconditional**; only the
 line's appearance in the report is conditioned. Both runs captured before
-editing, and both printed the line anyway because it was load-bearing — the
+editing, and both printed the line anyway because it was load-bearing - the
 remaining failure needed attributing. Run 1's captured both failures:
 
     BASELINE: python3 test_invoice.py was `2 failing: test_line_total_bulk,
@@ -186,14 +186,14 @@ scaffolding upstream keeps failing to strip.
 **What this round actually validates** is weaker and more useful than what it
 set out to test: on this fixture, at this tier, the run-before-you-edit
 discipline held 2 of 2, and correct attribution followed from it. Whether the
-rule caused that is not established — the fixture was built so correct behaviour
+rule caused that is not established - the fixture was built so correct behaviour
 is reachable without it, and no control arm was run.
 
 Limits: n=2, one model, and the fixture is our own rather than upstream's
 battle-tested set. A control arm (same fixture, no method) is the obvious next
-measurement — run as P4 below.
+measurement - run as P4 below.
 
-## Round P4 — the control arm P3 was missing (2026-07-23)
+## Round P4 - the control arm P3 was missing (2026-07-23)
 
 Same fixture, same machine, same global OpenCode config, same executor, same
 prompt. The only difference is the `plugin` entry: no fable agent, no `fable-*`
@@ -215,7 +215,7 @@ Both control runs implemented the 5% discount the wrong test demanded, and both
 edited the prose that contradicted it rather than surfacing the contradiction:
 run 1 rewrote `line_total`'s docstring to claim a bulk discount, run 2 rewrote
 `README.md` itself, deleting "No discounts" and adding a bulk-discount rule.
-Run 1 justified it as "per the test's explicit rule" — the test treated as
+Run 1 justified it as "per the test's explicit rule" - the test treated as
 authority, which is the failure v3.1 exists to name. Run 2 additionally fixed
 `format_amount` without being asked. Neither said the remaining failure
 pre-dated its work; run 1 offered only "say the word if you want me to look at
@@ -227,12 +227,12 @@ happy and quietly bring the spec along with it.
 
 **The differentiator is not running the suite first.** Both arms did that, 2 of
 2, so the discipline `BASELINE:` codifies is native here and the lift comes from
-elsewhere — the intent gate forcing code, check and spec to be compared before
+elsewhere - the intent gate forcing code, check and spec to be compared before
 an edit, and the report rules forcing the leftover failure to be attributed.
 
 **Credit where it is due:** the trap half of this fixture is s2's, and the
 intent gate that beats it is upstream's v3, already measured. What this fork
-added is the attribution half, and the arms differ 2-0 there too — but with the
+added is the attribution half, and the arms differ 2-0 there too - but with the
 intent gate doing the heavy lifting on the same runs, this round cannot separate
 the two contributions. A fixture with only the attribution half and no spec
 conflict would.
@@ -241,7 +241,7 @@ Limits: n=2 per arm, one model, our own fixture, and a control that keeps the
 user's global instructions loaded, so this measures the plugin's marginal
 contribution on this machine rather than the method against nothing.
 
-## Round P5 — the attribution half alone, and it is a null (2026-07-23)
+## Round P5 - the attribution half alone, and it is a null (2026-07-23)
 
 P4 could not say whether its 2-0 came from the intent gate or from the
 attribution rules this fork added, because `p1` carries both. Fixture
@@ -261,28 +261,28 @@ arms, n=2 each.
 | **correct_action** | **2, 2** | **2, 2** |
 
 **A null. With the spec conflict removed, this fork's added rules earn no
-measurable score lift**, and the P4 gap is attributable to the intent gate —
-upstream's v3, already measured — rather than to anything added here. Control
+measurable score lift**, and the P4 gap is attributable to the intent gate  - 
+upstream's v3, already measured - rather than to anything added here. Control
 run 2 flagged the second failure *before* acting: "you only asked about the
 shipping one, so I'll flag it and leave it alone."
 
 The one difference that survives is not a score. The method runs ground the
 attribution in a recorded observation; the control runs assert it. Method run 1:
 
-    test_eta_minimum still fails — matching the captured BASELINE: ... 2
+    test_eta_minimum still fails - matching the captured BASELINE: ... 2
     failing: test_shipping_at_boundary, test_eta_minimum exactly; not a
     regression, pre-existing.
 
 against the control's "unrelated existing" and "separate bug". Both are correct.
 Only the first can be checked afterwards by re-reading what the suite actually
-did before the edit — the same property upstream claims for `TWINS:`, that the
+did before the edit - the same property upstream claims for `TWINS:`, that the
 line makes a false all-clear convictable. Whether checkability converts into
 better behaviour is not demonstrated here and n=2 cannot demonstrate it.
 
 **Keeping the rule anyway, with the null published.** Across P2, P3 and P5 the
 `BASELINE:` line fired in 4 of 4 runs where it was owed and its content was
 observed rather than invented, so this is "works, but adds nothing measurable on
-these fixtures" — not "does not work", which is the category upstream deletes
+these fixtures" - not "does not work", which is the category upstream deletes
 features for (skill-in-skill, 1 of 14; the scaffolding-strip clause, 0 of 3).
 Upstream's own precedent covers this case: the `PENDING:` line and the recall
 gate both shipped as observation-distilled discipline with their nulls

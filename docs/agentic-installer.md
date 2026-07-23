@@ -8,11 +8,11 @@ Permission profile: `critical-only-compromise-v1`. Routine reading, inspection, 
 
 The user may request one of these modes:
 
-* `inspect` — inspect the repository and propose changes; do not modify files
-* `install` — install or safely merge the required files
-* `verify` — verify an existing installation; do not modify files
-* `uninstall` — remove only content installed by this workflow
-* `rollback` — restore files from backups created by a selected installation run
+* `inspect` - inspect the repository and propose changes; do not modify files
+* `install` - install or safely merge the required files
+* `verify` - verify an existing installation; do not modify files
+* `uninstall` - remove only content installed by this workflow
+* `rollback` - restore files from backups created by a selected installation run
 
 If no mode is specified, begin with `inspect`.
 

@@ -5,7 +5,7 @@
 # verdict taken from a diff against pristine plus checks the grader runs.
 #
 # Why this fixture, after s2: it is s2's mirror. Here the suite is GREEN while the code
-# is wrong, and the fix changes real behaviour, so `BASELINE:` is unambiguously owed —
+# is wrong, and the fix changes real behaviour, so `BASELINE:` is unambiguously owed  - 
 # which is exactly what round P1 could not tell us, because s2's correct answer edits a
 # test and changes no behaviour at all. It also arms `TWINS:` directly: the off-by-one
 # sits in create_order AND update_order, and only the first is mentioned in the task.

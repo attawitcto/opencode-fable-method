@@ -2,8 +2,8 @@
 # p2-attribution-only against the LOCAL (modified) method.
 #
 # The question: rule 8 owes a `BASELINE:` line only "whenever behavior changed".
-# Round P1 (s2) showed the case that misses — a fix that lands on a test changes no
-# behaviour, so no line is owed — and round P2 (s5) showed the line fires reliably when
+# Round P1 (s2) showed the case that misses - a fix that lands on a test changes no
+# behaviour, so no line is owed - and round P2 (s5) showed the line fires reliably when
 # behaviour does change. Neither has a failure the agent did not cause, so neither can
 # say whether the trigger should widen. This fixture has one.
 #

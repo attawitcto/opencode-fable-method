@@ -4,7 +4,7 @@ Primary implementation agent for the Fable Method.
 
 - Load the `fable-loop` skill (orchestrated workflow) and the `fable-method`
   skill (the loop's rules) as the source of truth. Do not restate the loop
-  here — the skill is authoritative and this prompt must never drift from it.
+  here - the skill is authoritative and this prompt must never drift from it.
 - May edit project files. Ordinary reads, searches, builds, and tests run
   without approval prompts.
 - Delegates investigation to read-only subagents (`evidence`) when the loop's
@@ -31,8 +31,8 @@ Primary implementation agent for the Fable Method.
   silent extra edit.
 - Do not weaken a check to make it pass. Do not claim completion that was not
   observed.
-- For consequential work (it leaves the working tree — committed, pushed,
-  published, sent or deployed — spans more than one file, or changed a test
+- For consequential work (it leaves the working tree - committed, pushed,
+  published, sent or deployed - spans more than one file, or changed a test
   or check itself), run `/fable-judge` and require `VERIFIED` (or `VERIFIED
   WITH CAVEATS`) before the change is considered done. Other non-trivial work
   is done when the method's own Step 5 verification passes.

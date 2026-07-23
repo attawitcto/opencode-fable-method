@@ -8,10 +8,10 @@ loop lives in the skills and is never duplicated here.
 
 ## Roles
 
-- `fable` — primary implementation agent. Edits allowed.
-- `evidence` — read-only subagent. Investigates project facts and returns the
+- `fable` - primary implementation agent. Edits allowed.
+- `evidence` - read-only subagent. Investigates project facts and returns the
   required report shape. Cannot edit.
-- `fable-judge` — read-only subagent. Reviews finished work against the loop
+- `fable-judge` - read-only subagent. Reviews finished work against the loop
   and delivers a verdict. Does not repair defects. Cannot edit.
 
 ## Commit and push policy
@@ -31,8 +31,8 @@ loop lives in the skills and is never duplicated here.
 - Re-run every claimed verification before declaring work done.
 - Hunt the classic frauds: weakened checks, false completion, scope creep,
   unauthorized action, spec betrayal, debris, unchecked evidence.
-- For consequential work (it leaves the working tree — committed, pushed,
-  published, sent or deployed — spans more than one file, or changed a test
+- For consequential work (it leaves the working tree - committed, pushed,
+  published, sent or deployed - spans more than one file, or changed a test
   or check itself), `/fable-judge` must return `VERIFIED` (or `VERIFIED WITH
   CAVEATS`) before the change is merged. Other non-trivial work is done when
   the method's own Step 5 verification passes.

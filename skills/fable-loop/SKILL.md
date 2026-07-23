@@ -12,7 +12,7 @@ This skill orchestrates the fable-method: load the `fable-method` skill first; i
 ## Stage 1 - PLAN (the first bookend)
 
 1. Apply method Steps 0-3: classify the ask, define done with a named verification, state load-bearing assumptions, and write down the open questions the plan depends on.
-2. **Evidence fan-out — gated.** Fan out only when the evidence surface is wide: the questions you have already written down number three or more, or they mix codebase questions with library/web questions. Below that, read directly in the main thread — a subagent's distilled report loses fidelity that direct reading keeps. When fanning out, spawn the gatherers as parallel subagents in ONE message, never sequentially:
+2. **Evidence fan-out - gated.** Fan out only when the evidence surface is wide: the questions you have already written down number three or more, or they mix codebase questions with library/web questions. Below that, read directly in the main thread - a subagent's distilled report loses fidelity that direct reading keeps. When fanning out, spawn the gatherers as parallel subagents in ONE message, never sequentially:
    - codebase questions: an Explore agent per distinct area ("how does X work", "what depends on Y");
    - library or fact questions: a research agent that fetches current docs or searches the web;
    - each subagent returns distilled findings with citations, never raw file dumps.
@@ -33,7 +33,7 @@ This skill orchestrates the fable-method: load the `fable-method` skill first; i
 ## Stage 3 - VERIFY (adversarially)
 
 1. Run the named verification yourself, both halves: the done criterion observed (ran, rendered, counted), and the surrounding system still healthy (build, tests, lint for the touched area), judged against the recorded `BASELINE:` line.
-2. **For consequential changes (it leaves the working tree — committed, pushed, published, sent or deployed — spans more than one file, or changed a test or check itself), spawn attackers.** 1-3 parallel subagents, each prompted to REFUTE the work from a distinct lens, for example: "Read this diff and prove the change is wrong or incomplete", "Exercise the changed behavior at runtime and find an input that breaks it", "Check this claim against the spec/docs and find a contradiction", "Diff the full change set against the plan's declared scope and prove something outside it changed". Distinct lenses beat identical reviewers.
+2. **For consequential changes (it leaves the working tree - committed, pushed, published, sent or deployed - spans more than one file, or changed a test or check itself), spawn attackers.** 1-3 parallel subagents, each prompted to REFUTE the work from a distinct lens, for example: "Read this diff and prove the change is wrong or incomplete", "Exercise the changed behavior at runtime and find an input that breaks it", "Check this claim against the spec/docs and find a contradiction", "Diff the full change set against the plan's declared scope and prove something outside it changed". Distinct lenses beat identical reviewers.
 3. A finding that survives your own check goes back to Stage 2 as new work. Hard bound per the method: 3 failed fix-verify cycles on the same issue, or any blocker outside your control, means stop and hand back with the output and your hypothesis.
 
 ## Stage 4 - AUDIT and REPORT (the second bookend)

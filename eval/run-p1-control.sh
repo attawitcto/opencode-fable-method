@@ -2,14 +2,14 @@
 # p1-baseline-attribution, CONTROL arm: the same fixture with the Fable plugin absent.
 #
 # Round P3 showed 2 of 2 ideal runs with the method, but could not say whether the
-# method caused it — the fixture is deliberately passable without the rule. This is the
+# method caused it - the fixture is deliberately passable without the rule. This is the
 # missing arm.
 #
 # The A/B holds everything constant except the plugin: same machine, same global
 # OpenCode config (its own agents, instructions and other plugins all still load), same
 # fixture, same executor, same offline framing. The only differences are the ones the
 # plugin itself is: no `plugin` entry, so no fable agent, no fable-* skills, no
-# invariants file, no permission profile — and therefore a plain message to the default
+# invariants file, no permission profile - and therefore a plain message to the default
 # agent instead of `--command fable-method`.
 #
 # fable_leak greps for the plugin leaking in, excluding the scratchpad path, which
