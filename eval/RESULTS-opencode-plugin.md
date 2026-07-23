@@ -730,3 +730,24 @@ is watching. Not fixed here, and not obviously the plugin's to fix.
 Limits: n=2, one model, one fixture, and the two changes above landed in the
 same batch as the measurement, so this round cannot say whether naming
 `evidence` in the skill helped - the fan-out did not happen either way.
+
+### Decision on `evidence`: kept on probation, with the trigger written down
+
+Kept for one more round rather than deleted at n=3 on a single model. A feature
+kept without a stated deletion trigger is a feature that never gets deleted, so
+the trigger is this:
+
+> Run `/fable-loop` on `s13-twin-fleet`, n=2, with an executor stronger than
+> MiniMax-M3. If `evidence` spawns in 0 of 2 again, delete the agent, its
+> prompt, and the fan-out section of `fable-loop`'s Stage 1, and publish the
+> 0-of-5 null.
+
+**That measurement cannot be run on this machine.** The only authenticated
+provider is `minimax-coding-plan`, and M3 is already the strongest model in it;
+the `opencode/*` entries are small free-tier models, not stronger executors. So
+the probation is real but currently unfallable here, and that is stated rather
+than left to look like a pending task someone forgot.
+
+Until it is run, nothing should claim this plugin fans out evidence gathering.
+The `TWINS:` line is what actually produced the sweep on this fixture, in the
+main thread, and that claim is measured.
