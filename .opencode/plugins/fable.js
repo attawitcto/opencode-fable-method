@@ -261,12 +261,23 @@ const AGENTS = () => ({
     prompt: prompt('fable-judge'),
     permission: {
       edit: 'deny',
-      // Unknown commands ask rather than deny, so a project can approve its
-      // own test/lint/build commands at execution time without this plugin
-      // guessing which package-manager scripts are safe to run. The hard
-      // denies still apply - `ask` must never become an approval path for
-      // publishing or a destructive command.
-      bash: readOnlyBash('ask'),
+      // This was `ask`, so a project could approve its own test/lint/build
+      // commands at execution time. It deadlocked the judge instead: a subagent
+      // has nowhere to raise the prompt, so `/fable-judge` hung on the first
+      // command not on the inspect list and never returned. Measured on s7,
+      // three runs, three hangs - on `python3 -c ...`, on `cp -r ... && cd`,
+      // and on `cd ...`. The judge's own skill orders it to re-run every
+      // claimed verification, so the commands it deadlocks on are precisely
+      // the ones it exists to run. Widening the inspect list does not fix this:
+      // `git branch` and `git rev-parse` were already added for the same
+      // symptom and `cd`, `cp` and `python` still hung it.
+      //
+      // `allow` keeps every deny below it, so the judge stays strictly more
+      // restricted than the `fable` primary agent it reviews: no edit tool, no
+      // redirect, no write-side git, and every hard deny. Same fixture with
+      // this line changed: REFUTED with all five planted frauds, backed by an
+      // executed `convert(0.125)` and an executed suite run.
+      bash: readOnlyBash('allow'),
     },
   },
 })

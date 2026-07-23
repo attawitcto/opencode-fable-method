@@ -251,8 +251,9 @@ provenances never blur. `eval/scenarios-plugin/` holds the two fixtures written
 here; `eval/run-*.sh` are the runners. Executor was MiniMax-M3, not upstream's
 Haiku, so none of these numbers is comparable to `RESULTS.md`.
 
-Five rounds, and the honest summary is that the method carries the result and
-this fork's additions do not measurably improve it:
+Six rounds, and the honest summary is that the method carries the result, this
+fork's added rules do not measurably improve it, and this fork's *delivery* was
+where the real defects were:
 
 | round | fixture | result |
 |---|---|---|
@@ -261,6 +262,7 @@ this fork's additions do not measurably improve it:
 | P3 | `p1` | 2 of 2 ideal - and the hypothesis behind the round lost |
 | P4 | `p1`, control arm | method 2, 2 against control **0, 0** |
 | P5 | `p2` | method 2, 2 against control **2, 2** - a null |
+| P6 | `s7` | `/fable-judge` **deadlocked as shipped**; 2 of 2 REFUTED after a one-line fix |
 
 P4 is the one real gap, and P5 explains it: `p1` carries upstream's
 spec-versus-test trap, and removing that trap closes the gap entirely. The lift
