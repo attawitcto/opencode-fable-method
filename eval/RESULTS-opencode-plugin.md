@@ -651,3 +651,82 @@ one argument, and the loader dies on it. The helpers are wrapped in
 return an object. Verified by mutation, and it names the exact line
 (`effective returns undefined`). This is the second time this round that a
 static property was cheaper to assert than to discover by running the thing.
+
+## Round P9 - the `evidence` subagent, measured at last, and it does not fire (2026-07-23)
+
+`evidence` is one of three agents this plugin installs and had never executed
+once. The earlier probe used `s5`, one small file, where the loop's Stage 1 gate
+correctly declines to fan out, so it could not separate "unreachable" from "the
+gate said no". Two changes went in first, then the measurement.
+
+**Change 1, free: `/fable` deleted.** It bound the same agent, loaded the same
+skill and carried the same instruction as `/fable-loop`, differing only by
+restating one rule at more length. Two names for one behaviour is surface, not a
+feature, so it went without a measurement. Six commands now.
+
+**Change 2: the skill named agents that do not exist here.** `fable-loop`'s
+Stage 1 said to spawn "an Explore agent per distinct area" and "a research
+agent". This plugin ships neither; it ships `evidence`, and only the agent
+prompt mentioned it, which is the weaker of the two sources. The skill is
+declared "the workflow source of truth for this command", so the authoritative
+instruction pointed at nothing. Now it names `evidence` and keeps a generic
+fallback for other harnesses.
+
+**The measurement.** Fixture `scenarios/s13-twin-fleet`: 24 files, 21 modules, a
+shared `currency.to_cents` helper, five truncation sites under five disguises,
+four already-correct money modules that must not be touched, ten decoys. The
+widest evidence surface in the suite. n=2, runner
+`eval/run-p9-loop-fanout.sh`, graded by importing every money module and
+converting 19.99.
+
+| | run 1 | run 2 |
+|---|---|---|
+| `evidence` subagent spawned | **no** | **no** |
+| any `task` dispatch at all | **no** | **no** |
+| the word subagent / fan-out anywhere in the transcript | **0** | **0** |
+| sites fixed | 1 of 5 (`invoices`) | 1 of 5 (`invoices`) |
+| the other four correctly identified | yes, in passing | **yes, enumerated in `TWINS:`** |
+| four already-correct modules harmed | none | none |
+| delivered a report | **no** | yes |
+| **correct_action** | **incomplete** | **2** |
+
+**The subagent is a null, 0 of 2, and this time the gate had every reason to
+arm.** Neither run mentioned fanning out at all: the Stage 1 gate did not appear
+in the reasoning even once, with the skill naming `evidence` explicitly. Across
+`s5` and `s13` that is 0 of 3 attempts. This is not "works but adds nothing
+measurable", which is the category upstream keeps with the null published. It is
+"does not fire", which is the category upstream deletes for (skill-in-skill, 1
+of 14). Recorded rather than acted on: n=3, one model, and a stronger executor
+may orchestrate where this one does not. The claim that has to stop either way
+is that this plugin fans out; on this tier it does not.
+
+**Run 2 scored the fixture's top mark, and not by fixing everything.** The
+rubric allows a 2 for "all five enumerated, the named one fixed, the other four
+listed as found-but-left with a stated reason". It wrote:
+
+    TWINS: searched `int(... * 100)` - found 4 other legacy conversion sites:
+    exports/payouts.py, exports/statements.py, exports/receipts.py, and
+    exports/refunds.py. They are outside the requested invoice-specific scope
+    and were not changed.
+
+The set is exactly right and the four correct modules were left alone. That is
+upstream's `TWINS:` rule doing the work the fan-out was supposed to do, in the
+main thread, with no subagent involved.
+
+**Run 1 never delivered a report, and the cause is this plugin's own profile.**
+It found the other four sites too (twelve mentions in the transcript) and fixed
+`invoices`, then tried to tidy up `__pycache__`. `rm -rf *` is denied and
+`rm -r *` is `ask`, which `opencode run` auto-rejects; it retried the same
+cleanup in two shapes, and the 900-second watchdog caught it still there. So a
+run that had done the work scored nothing, because it spent its remaining budget
+on a cleanup the profile will never grant.
+
+That is worth separating from the model being weak. The profile is doing what it
+was designed to do, and the fixture has no `.gitignore` where a real project
+would. But an agent that cannot make progress against its own permission rules
+and keeps retrying is a live failure mode, and headless is exactly where nobody
+is watching. Not fixed here, and not obviously the plugin's to fix.
+
+Limits: n=2, one model, one fixture, and the two changes above landed in the
+same batch as the measurement, so this round cannot say whether naming
+`evidence` in the skill helped - the fan-out did not happen either way.

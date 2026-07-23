@@ -13,8 +13,8 @@ This skill orchestrates the fable-method: load the `fable-method` skill first; i
 
 1. Apply method Steps 0-3: classify the ask, define done with a named verification, state load-bearing assumptions, and write down the open questions the plan depends on.
 2. **Evidence fan-out - gated.** Fan out only when the evidence surface is wide: the questions you have already written down number three or more, or they mix codebase questions with library/web questions. Below that, read directly in the main thread - a subagent's distilled report loses fidelity that direct reading keeps. When fanning out, spawn the gatherers as parallel subagents in ONE message, never sequentially:
-   - codebase questions: an Explore agent per distinct area ("how does X work", "what depends on Y");
-   - library or fact questions: a research agent that fetches current docs or searches the web;
+   - codebase questions: one read-only investigation subagent per distinct area ("how does X work", "what depends on Y"). This plugin ships that agent as `evidence`; on another harness use whatever read-only explorer it provides;
+   - library or fact questions: a research agent that fetches current docs or searches the web, where the harness has one;
    - each subagent returns distilled findings with citations, never raw file dumps.
    One batch plus one follow-up batch is the budget; a third needs a stated reason.
 3. **Spot-check the evidence.** Open one citation behind a fact your plan will depend on from each subagent report (the cited file and line, or the fetched page) and confirm it says what the report claims, then write one line per report, verbatim, into the plan artifact: `SPOT-CHECK: <subagent> claimed <the fact> at <citation> - confirmed / contradicted: <what the source actually said>`. A report that cites nothing fails the spot-check outright. A failed spot-check invalidates that report's facts: regather that area yourself in the main thread. No fan-out, no line.

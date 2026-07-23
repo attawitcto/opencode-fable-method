@@ -1,7 +1,7 @@
 # Fable Method
 
 Workflow source of truth: the `fable-method` and `fable-loop` skills, loaded
-through the skill tool by the `fable` agent and by the `/fable`,
+through the skill tool by the `fable` agent and by the
 `/fable-method`, `/fable-loop`, `/fable-plan`, `/fable-judge`, and
 `/fable-domain` commands. This file records only the invariants; the full
 loop lives in the skills and is never duplicated here.

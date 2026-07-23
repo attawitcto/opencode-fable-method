@@ -331,13 +331,12 @@ const skill = (name) =>
   `## Skill\n\nLoad the \`${name}\` skill with the skill tool and treat it as the workflow source of truth for this command.`
 
 const COMMANDS = () => ({
-  fable: {
-    description: 'Run the Fable Loop on a task (default entry point).',
-    agent: 'fable',
-    template: `${input}\n\n${skill('fable-loop')}\n\nRun the full loop on the task. Stage 1 produces the plan artifact. If the ask is plan-first shaped (ambiguous scope, irreversible or outward-facing actions, or the user asked for a plan), present the plan and STOP for approval before Stage 2.`,
-  },
+  // `/fable` used to sit here as a second entry point. It bound the same agent,
+  // loaded the same skill and carried the same instruction as `/fable-loop`,
+  // differing only in restating one rule at more length. Deleted rather than
+  // measured: two names for one behaviour is surface, not a feature.
   'fable-loop': {
-    description: 'Run the Fable Loop on a task.',
+    description: 'Run the Fable Loop on a task (default entry point).',
     agent: 'fable',
     template: `${input}\n\n${skill('fable-loop')}\n\nRun the full loop. Stage 1 produces the plan artifact. If the ask is plan-first shaped, present the plan and STOP for approval before Stage 2.`,
   },
