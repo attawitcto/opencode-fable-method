@@ -904,7 +904,11 @@ files. Both outcomes were observed: run 2 (`s5`) picked `general`, run 9 (`s13`)
 picked `fable-judge`. So the exposure is real and non-deterministic, not
 guaranteed, and it is **inherited from upstream** - upstream's Stage 3 names no
 agent either. Fixed here by naming the read-only agent in Stage 3, mirroring the
-wording Stage 1 already uses for `evidence`.
+wording Stage 1 already uses for `evidence`, and guarded by a new assertion in
+`checks.py`: every stage of `fable-loop` that orders a spawn must name an agent
+the plugin ships with `edit: deny`. Verified by mutation in both directions -
+stripping the name from Stage 3 fails on Stage 3, stripping it from Stage 1 fails
+on Stage 1. The property is static, so it is asserted rather than measured again.
 
 This also corrects a claim made earlier in this round's own analysis, that a
 reviewer with edit rights was the certain outcome. It is not; it is a coin toss

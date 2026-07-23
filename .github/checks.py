@@ -233,6 +233,51 @@ try:
 except Exception as e:
     fail(f"subtask probe: {e}")
 
+
+# Every instruction to spawn subagents names an agent this plugin ships as
+# read-only.
+#
+# OpenCode's default for an omitted `subagent_type` is a general agent with no
+# edit restriction, so a stage that says "spawn attackers" and stops leaves the
+# choice to the model. Round P11 watched both outcomes on the same skill text:
+# `general` on s5, `fable-judge` on s13. A reviewer that can rewrite the work it
+# reviews is not a reviewer, and an evidence gatherer that can edit is not
+# read-only, so the agent has to be named where the spawn is ordered.
+readonly_probe = r"""
+import { AGENTS } from './.opencode/plugins/fable.js'
+const names = Object.entries(AGENTS())
+  .filter(([, a]) => a.permission?.edit === 'deny')
+  .map(([name]) => name)
+process.stdout.write(names.join('\n'))
+"""
+try:
+    out = subprocess.run(
+        ["node", "--input-type=module", "-e", readonly_probe],
+        cwd=ROOT, capture_output=True, text=True, timeout=60,
+    )
+    read_only = [n for n in out.stdout.strip().splitlines() if n]
+    if out.returncode != 0 or not read_only:
+        fail("read-only agent probe: could not resolve any agent with edit: deny")
+    else:
+        rel = "skills/fable-loop/SKILL.md"
+        with io.open(os.path.join(ROOT, rel), encoding="utf-8") as f:
+            stages = re.split(r"^## ", f.read(), flags=re.M)
+        unnamed = []
+        for stage in stages:
+            title = stage.splitlines()[0].strip() if stage.strip() else ""
+            if not re.search(r"\bspawn\b.*\bsubagents?\b|\bsubagents?\b.*\bspawn\b", stage, re.S | re.I):
+                continue
+            if not any("`%s`" % n in stage for n in read_only):
+                unnamed.append(title)
+        if unnamed:
+            for title in unnamed:
+                fail(f"{rel}: '{title}' orders a spawn without naming a read-only agent "
+                     f"(one of {read_only}); the harness default can edit")
+        else:
+            ok("every spawn instruction names a read-only agent")
+except Exception as e:
+    fail(f"read-only agent probe: {e}")
+
 print()
 if failures:
     print(f"{len(failures)} check(s) failed")
