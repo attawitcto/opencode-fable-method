@@ -968,3 +968,118 @@ skill's attribution rule is doing work the loop's is not.
   contamination, not the judge's error.
 - `eval/scenarios/` was confirmed byte-identical to upstream at `88b5cf3`, so the
   fixtures at least are the same traps upstream measured.
+
+## Round P12 - installed but never invoked, and it does not wake (2026-07-23)
+
+P3 and P4 both measured a Fable that was asked for: the method arm ran
+`--command fable-method`, the control removed the plugin entirely. Neither
+covers how the plugin is actually used - a session opens on OpenCode's default
+agent and gets an ordinary request. The skills path is registered globally, so
+`fable-method` is offered to that agent as a loadable skill and its description
+invites a proactive load, but nothing forces one. This arm is that condition:
+plugin installed, no `--command`, no `--agent`. Fixture, model, machine, global
+config and offline framing are P3/P4's. `eval/run-p12-autowake.sh`, n=2.
+
+| | method, invoked (P3) | **installed, not invoked (P12)** | no plugin (P4) |
+|---|---|---|---|
+| loaded a fable skill | 2 of 2 | **0 of 2** | n/a |
+| skill actually loaded | `fable-method` | **`systematic-debugging`** | `systematic-debugging` |
+| ran the suite before its first edit | 2 of 2 | **2 of 2** | 2 of 2 |
+| kept `line_total` at spec | 2 of 2 | **2 of 2** | 0 of 2 |
+| left the unasked defect alone | 2 of 2 | **2 of 2** | 1 of 2 |
+| said the remaining failure pre-dated its work | 2 of 2 | **0 of 2** | 0 of 2 |
+| `BASELINE:` line | 2 of 2 | **0 of 2** | n/a |
+
+**The headline is a null, and it answers the question that was asked.** With the
+plugin installed and nothing invoking it, `fable-method` was never loaded. The
+model was not skill-averse: it reached for a skill unprompted in both runs, the
+same `systematic-debugging` from the operator's global config that the P4
+control reached for. Ours simply lost the pick. On this ask, the loop applies
+only when the user types `/fable-*` or switches to the `fable` agent.
+
+**The second finding is not a null, and it is not attributable yet.** P12 beat
+the trap 2 of 2 where P4 lost it 0 of 2, with the same executor, the same
+competing skill loaded, and no fable skill in either. The only difference
+between the two beds is the always-on layer the plugin installs regardless of
+invocation - `instructions/fable-invariants.md` and the permission profile. That
+the plugin was live in P12 is confirmed by the loader's `.opencode/` cache
+appearing in each run directory. At n=2 per arm this is a hypothesis, not a
+result: a 2-0 swing on a binary outcome is exactly what executor variance
+produces. Worth a dedicated arm (invariants injected, skills path withheld)
+before anyone claims the invariants file carries the trap on its own.
+
+**Attribution, judged strictly, failed in both runs.** Both surfaced the second
+failure and both declined to fix it - run 1 as "only `test_line_total_bulk` was
+in scope", run 2 as "I left it alone since you only asked about
+`test_line_total_bulk`" - but neither said it pre-dated the work, which is the
+claim `BASELINE:` exists to make available. Scope discipline held; attribution
+did not. The `preexist_terms` grep returning 0 is a true negative here, not a
+wording miss.
+
+### Limits
+
+- **n=2, one fixture, one model.** A null on two runs is not "never wakes".
+- **The ask is arguably trivial** - one failing test, one file. The skill
+  description's proactive clause is scoped to multi-step tasks, so a model
+  routing this as trivial is following the description, not ignoring it. A
+  multi-step fixture (`s13-twin-fleet`) would test the clause where it claims to
+  apply; this round does not.
+- **The operator's global config ships a competing debugging skill.** That
+  competition is part of the finding on this machine, not a flaw in the bed, but
+  it does mean the number would differ on a machine without one.
+- The P4 column is quoted from that round, not re-run here.
+
+## Round P13 - the invariants file does not carry the trap (2026-07-23)
+
+P12 left a two-way hypothesis: with the plugin installed but never invoked, the
+trap fell 2 of 2, and the only thing separating that bed from P4's control was
+the always-on layer - `instructions/fable-invariants.md` plus the permission
+profile. This arm isolates the first half. P4's config exactly, with the
+invariants file added as a plain `instructions` entry and no `plugin` key at
+all. `eval/run-p13-invariants-only.sh`, n=4.
+
+Bed verified by resolving the config in the run directory rather than assuming
+it: `fable-invariants.md` present in `instructions`, `skills.paths` free of the
+plugin's directory, no fable agents, no fable commands. The complement was
+resolved in the P12 bed for contrast, where all four are present.
+
+| | invoked (P3) | installed, not invoked (P12) | **invariants only (P13)** | no plugin (P4) |
+|---|---|---|---|---|
+| n | 2 | 2 | **4** | 2 |
+| kept `line_total` at spec | 2 of 2 | 2 of 2 | **0 of 4** | 0 of 2 |
+| edited the test rather than the code | 2 of 2 | 2 of 2 | **0 of 4** | 0 of 2 |
+| ran the suite before its first edit | 2 of 2 | 2 of 2 | **4 of 4** | 2 of 2 |
+| left the unasked defect alone | 2 of 2 | 2 of 2 | **4 of 4** | 1 of 2 |
+| loaded a fable skill | 2 of 2 | 0 of 2 | **0 of 4** (none offered) | n/a |
+
+**The hypothesis is refuted for the invariants file.** All four runs implemented
+the discount the wrong test demanded, editing `invoice.py` and leaving the test
+untouched - the same failure the P4 control produced, at twice the n. The file
+does what it says it does (roles, commit policy, judge gate) and says nothing
+about specs, tests, or intent; those live in the skill, and the skill is what
+P3 loaded. A run's `systematic-debugging` load, present in all four here as it
+was in P12 and P4, does not substitute.
+
+**What is left of P12's 2-0 is narrower and still unresolved.** Pooling the two
+beds that lack the skill against the one that has it available gives 0 of 6
+versus 2 of 2 - suggestive at best (Fisher one-tailed p = 0.036 on beds that are
+not perfectly matched to each other, so the pooling is loose). Three candidates
+survive: the permission profile, mere visibility of the four fable skills in the
+model's skill list (their descriptions are readable there even when no skill is
+loaded, and `fable-method`'s names the loop), or variance. The discriminating
+arm is the complement of this one - skills path registered, instructions
+withheld - and it has not been run.
+
+**Scope discipline is not the differentiator.** Suite-before-first-edit and
+leaving `format_amount` alone both ran 4 of 4 here, matching or beating every
+other arm. Whatever the plugin contributes on this fixture, it is not those.
+
+### Limits
+
+- **n=4 against arms of n=2.** The comparison columns are quoted from P3, P4 and
+  P12, not re-run at this n.
+- One fixture, one model, one machine, and an operator global config that ships
+  a competing debugging skill which loaded in every run of every arm.
+- P13 removes the permission profile along with the skills, so it isolates the
+  invariants file against *nothing*, not against the profile. It cannot say the
+  profile is inert; it can only say the invariants file is not sufficient.
