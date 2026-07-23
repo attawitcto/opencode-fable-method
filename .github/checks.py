@@ -198,6 +198,41 @@ try:
 except Exception as e:
     fail(f"export shape probe: {e}")
 
+# 10. No read-only command is dispatched as a subtask.
+#
+# `subtask: true` runs the bound agent as a child and hands the session back to
+# the parent primary when it returns, and the parent can edit. So a command that
+# promises read-only keeps that promise only for the child. Round P7 watched
+# `/fable-plan` do exactly this: the `plan` child ran inspections only and
+# returned a plan, then the parent implemented it and left the tree dirty.
+subtask_probe = r"""
+import { AGENTS, COMMANDS } from './.opencode/plugins/fable.js'
+const agents = AGENTS()
+const bad = []
+for (const [name, cmd] of Object.entries(COMMANDS())) {
+  if (cmd.subtask !== true) continue
+  // `plan` is OpenCode's own agent; the config hook gives it `edit: deny`, so
+  // it is read-only here even though it is absent from AGENTS().
+  const readOnly = cmd.agent === 'plan' || agents[cmd.agent]?.permission?.edit === 'deny'
+  if (readOnly) bad.push(`/${name} -> ${cmd.agent}`)
+}
+process.stdout.write(bad.join('\n'))
+"""
+try:
+    out = subprocess.run(
+        ["node", "--input-type=module", "-e", subtask_probe],
+        cwd=ROOT, capture_output=True, text=True, timeout=60,
+    )
+    if out.returncode != 0:
+        fail(f"subtask probe: {out.stderr.strip().splitlines()[-1] if out.stderr.strip() else 'node failed'}")
+    elif out.stdout.strip():
+        for line in out.stdout.strip().splitlines():
+            fail(f"read-only command is a subtask, so its parent can still edit: {line}")
+    else:
+        ok("no read-only command is dispatched as a subtask")
+except Exception as e:
+    fail(f"subtask probe: {e}")
+
 print()
 if failures:
     print(f"{len(failures)} check(s) failed")

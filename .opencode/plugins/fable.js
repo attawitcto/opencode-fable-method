@@ -282,7 +282,14 @@ const AGENTS = () => ({
   'fable-judge': {
     description:
       'Read-only adversarial verification subagent for the Fable Method. Reviews finished work and delivers a verdict. Does not repair defects.',
-    mode: 'subagent',
+    // `all`, not `subagent`, so `/fable-judge` can run it as the session's own
+    // agent instead of dispatching it as a subtask. A subtask hands control
+    // back to the parent primary when it returns, and the parent can edit: P7
+    // watched exactly that turn `/fable-plan` into an implementation run. The
+    // judge's standing rule is that judging changes nothing, so it must not
+    // leave an unconstrained agent holding the session. `all` keeps it
+    // dispatchable as a subagent too, which is how `fable` reaches it.
+    mode: 'all',
     prompt: prompt('fable-judge'),
     permission: {
       edit: 'deny',
@@ -357,7 +364,9 @@ const COMMANDS = () => ({
   'fable-judge': {
     description: 'Adversarially verify finished work. Read-only. Does not repair defects.',
     agent: 'fable-judge',
-    subtask: true,
+    // No `subtask: true`. See the `mode: all` note on the agent: a subtask
+    // returns the session to a parent that can edit, which is the one thing a
+    // judge must never do.
     template: `${input}\n\n${skill('fable-judge')}\n\nReview the most recent completed work. Hunt the classic frauds (weakened checks, false completion, scope creep, unauthorized action, spec betrayal, debris, unchecked evidence). Deliver one of: \`VERIFIED\`, \`VERIFIED WITH CAVEATS\`, \`REFUTED\`.`,
   },
   'fable-domain': {

@@ -263,7 +263,7 @@ where the real defects were:
 | P4 | `p1`, control arm | method 2, 2 against control **0, 0** |
 | P5 | `p2` | method 2, 2 against control **2, 2** - a null |
 | P6 | `s7` | `/fable-judge` **deadlocked as shipped**; 2 of 2 REFUTED after a one-line fix |
-| P7 | `s5` | `/fable-plan` **edited files**; 2 of 2 clean after dropping `subtask` |
+| P7 | `s5`, `s7` | `/fable-plan` and `/fable-judge` **let an unconstrained parent act**; 2 of 2 clean each after dropping `subtask` |
 
 P4 is the one real gap, and P5 explains it: `p1` carries upstream's
 spec-versus-test trap, and removing that trap closes the gap entirely. The lift
