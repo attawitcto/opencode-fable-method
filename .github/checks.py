@@ -111,7 +111,8 @@ for name in sorted(os.listdir(scen_dir)):
 # Resolution is imported from the plugin instead of re-modelled: a check that
 # resolves permissions differently from the thing it checks is not a check.
 probe = r"""
-import { AGENTS, projectPermission, effective } from './.opencode/plugins/fable.js'
+import { AGENTS, permissionInternals } from './.opencode/plugins/fable.js'
+const { projectPermission, effective } = permissionInternals()
 const bad = []
 const loose = []
 for (const profile of [{ commit: 'allow', strict: false }, { commit: 'ask', strict: true }]) {
@@ -162,6 +163,40 @@ try:
         ok("no subagent resolves to `ask`, and none outranks the primary profile")
 except Exception as e:
     fail(f"subagent ask probe: {e}")
+
+# 9. Every named export returns an object.
+#
+# OpenCode calls EVERY named export of a plugin file as a plugin factory. A
+# helper exported for a test therefore runs at startup, and one that returns
+# anything the loader cannot treat as a hooks object kills the plugin at
+# dispatch with `UnknownError: Unexpected server error` and an empty log. A bare
+# `export { effective }` cost 40 minutes of bisection to find exactly that way.
+export_probe = r"""
+import * as mod from './.opencode/plugins/fable.js'
+const bad = []
+for (const [name, value] of Object.entries(mod)) {
+  if (name === 'default' || typeof value !== 'function') continue
+  let out
+  try { out = value() } catch { continue }   // needs real args; not a bare helper
+  if (out && typeof out.then === 'function') continue   // the plugin factory itself
+  if (typeof out !== 'object' || out === null) bad.push(`${name} returns ${typeof out}`)
+}
+process.stdout.write(bad.join('\n'))
+"""
+try:
+    out = subprocess.run(
+        ["node", "--input-type=module", "-e", export_probe],
+        cwd=ROOT, capture_output=True, text=True, timeout=60,
+    )
+    if out.returncode != 0:
+        fail(f"export shape probe: {out.stderr.strip().splitlines()[-1] if out.stderr.strip() else 'node failed'}")
+    elif out.stdout.strip():
+        for line in out.stdout.strip().splitlines():
+            fail(f"named export is called by OpenCode at startup and must return an object: {line}")
+    else:
+        ok("every named export returns an object")
+except Exception as e:
+    fail(f"export shape probe: {e}")
 
 print()
 if failures:

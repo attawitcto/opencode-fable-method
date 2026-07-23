@@ -341,7 +341,17 @@ const COMMANDS = () => ({
   'fable-plan': {
     description: 'Produce a Fable Method plan for the task. Plan-only. Does not edit files.',
     agent: 'plan',
-    subtask: true,
+    // Not a subtask, deliberately. `subtask: true` dispatches `plan` as a child
+    // and hands control back to the parent primary agent when it returns - and
+    // the parent is `build`, which can edit. Round P7 caught that: the `plan`
+    // child ran only inspections and returned a plan, then the parent went
+    // ahead and implemented it, editing both files. Denying `plan` the edit
+    // tool does not help, because `plan` was never the one editing.
+    //
+    // Without the flag the command runs `plan` as the session's own agent, so
+    // the edit deny governs the whole run and there is no unconstrained parent
+    // left to act. `/fable-judge` keeps its flag: `fable-judge` is a subagent
+    // and a subagent has to be dispatched.
     template: `${input}\n\n${skill('fable-method')}\n\nApply Steps 0-3 only: classify the ask, define done with a named verification, gather evidence, deliver the plan artifact. **STOP** after the plan. Do not edit files.`,
   },
   'fable-judge': {
@@ -523,6 +533,19 @@ export const FableMethod = async (_input, options = {}) => {
         state.injected.agents.push(name)
       }
 
+      // `/fable-plan` is advertised "Plan-only. Does not edit files." and it
+      // delegates that guarantee to OpenCode's built-in `plan` agent. The
+      // guarantee did not hold: round P6 ran it once on s5-twin-bug and it
+      // edited both files with the edit tool. `plan`'s read-only default is
+      // internal to OpenCode and resolves to an empty agent block, so the
+      // profile this plugin installs - `permission['*']: allow` plus
+      // `edit['*']: allow` - outranks it.
+      //
+      // This plugin widened the profile, so this plugin narrows it back, rather
+      // than adding a fourth agent for a guarantee the third one should already
+      // carry. `fill` keeps the project's own opinion if it has one.
+      config.agent.plan = fill({ permission: { edit: 'deny' } }, config.agent.plan)
+
       config.command ||= {}
       for (const [name, def] of Object.entries(COMMANDS())) {
         if (config.command[name]) continue
@@ -564,5 +587,13 @@ export { doctor, AGENTS, COMMANDS }
  * Exported for `.github/checks.py`, which asserts that no subagent resolves to
  * `ask` on any rule. Shared rather than reimplemented for the same reason the
  * doctor is: a check that models the resolution differently is not a check.
+ *
+ * Wrapped in a factory rather than exported directly, because OpenCode calls
+ * EVERY named export as a plugin factory. `AGENTS`, `COMMANDS` and `doctor`
+ * survive that only because they return an object or a string, which the loader
+ * ignores. A bare `export { effective }` does not: called with one argument it
+ * returns `undefined`, and the whole plugin dies at dispatch with
+ * `UnknownError: Unexpected server error` and nothing in the log. Every export
+ * here must return an object.
  */
-export { projectPermission, effective }
+export const permissionInternals = () => ({ projectPermission, effective })

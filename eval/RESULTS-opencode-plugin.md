@@ -467,3 +467,78 @@ Limits: n=2 on the fixed judge, n=1 on every other command, one model, and the
 judge arms differ by a config line rather than by a rebuild, so the "shipped"
 arm is the shipped config and the "fixed" arm is the same file with one value
 changed.
+
+## Round P7 - `/fable-plan` edits files, and the first two fixes were wrong (2026-07-23)
+
+P6 left `/fable-plan` as the top open defect: advertised "Plan-only. Does not
+edit files.", it edited both files of `s5-twin-bug`. Runner:
+`eval/run-p7-plan-opencode.sh`, graded by `git status --porcelain` in a bed
+committed before the run.
+
+**First hypothesis, and it was wrong.** The command binds `agent: 'plan'`,
+OpenCode's built-in read-only agent, and this plugin's profile grants
+`edit: {'*': 'allow'}` project-wide. `agent.plan` resolves to an empty block, so
+the profile looked like it was outranking the built-in default. The fix was one
+line, `config.agent.plan = fill({ permission: { edit: 'deny' } }, ...)`, and it
+scored **1 of 2**: run 1 clean, run 2 edited both files again.
+
+The session store says why, and it exonerates the `plan` agent entirely. In the
+failing run the `plan` child ran only `git status`, `git log`, `git diff`,
+`python3 test_orders.py` and a few probes, then returned a plan. The **parent**
+session did the editing, and the parent is `build`:
+
+    p7fixed-run2 | build | task  | completed | fable-plan
+    p7fixed-run2 | plan  | bash  | completed | ... inspections only, no edit ...
+    p7fixed-run2 | build | edit  | completed | test_orders.py
+    p7fixed-run2 | build | edit  | completed | orders.py
+
+`subtask: true` dispatches `plan` as a child and hands control back to an
+unconstrained primary agent when it returns. Denying `plan` the edit tool
+cannot help, because `plan` was never the one editing. The `plan` agent obeyed
+in both runs, including the run that ended dirty.
+
+**The fix is dropping `subtask: true`.** Without it the command runs `plan` as
+the session's own agent: the edit deny governs the whole run and there is no
+parent left to act.
+
+| | run 1 | run 2 |
+|---|---|---|
+| working tree after the run | **clean** | **clean** |
+| session shape | `plan`, no parent | `plan`, no parent |
+| edit / write / patch / task calls | none | none |
+| plan artifact delivered | yes | yes |
+
+Both sessions are `agent=plan` with `parent=-`, against the broken runs' `build`
+parent plus `plan` child. Run 1 also emitted `PENDING: edit orders.py and
+test_orders.py - awaiting your authorization`, which is the method's own line
+for a prescribed follow-up deliberately untaken.
+
+Honest caveat: neither run attempted an edit, so the `edit: deny` added to
+`config.agent.plan` was not exercised by this round. What is demonstrated is
+that the unconstrained parent is gone. The deny is kept as the second layer,
+unmeasured and labelled so.
+
+`/fable-judge` keeps `subtask: true` and therefore keeps this exposure: it is a
+`mode: subagent` agent and a subagent has to be dispatched. Its three clean runs
+in P6 are consistent with a parent that chose to ask rather than act (both
+verdicts ended by offering to fix rather than fixing), which is not the same as
+a parent that cannot.
+
+### A self-inflicted outage, and the check that now catches it
+
+The P6 fix exported two helpers for `.github/checks.py` to import. That single
+line broke the plugin completely: every command failed with
+`UnknownError: Unexpected server error`, no session created, nothing in the log.
+It cost roughly forty minutes of bisection, and the first three suspects
+(`HARD_ASKS`, the two scalar denies, the plan fix) were all wrong.
+
+**OpenCode calls every named export of a plugin file as a plugin factory.**
+`AGENTS`, `COMMANDS` and `doctor` had always survived that only because they
+return an object or a string. `effective` returns `undefined` when called with
+one argument, and the loader dies on it. The helpers are wrapped in
+`permissionInternals()` now, which returns an object like the others.
+
+`checks.py` asserts it: every named export, called with no arguments, must
+return an object. Verified by mutation, and it names the exact line
+(`effective returns undefined`). This is the second time this round that a
+static property was cheaper to assert than to discover by running the thing.
