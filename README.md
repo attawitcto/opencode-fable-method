@@ -2,7 +2,7 @@
 
 The Fable Method for [OpenCode](https://opencode.ai), delivered as a plugin.
 
-Three agents, seven commands, four skills and a permission profile - installed
+Three agents, six commands, four skills and a permission profile - installed
 by adding one line to `opencode.json`. **No files are copied into your
 repository**, and the plugin writes nothing at startup.
 
@@ -12,18 +12,18 @@ so `git status` stays clean. That is OpenCode, not this plugin.)
 
 ## Install
 
-**This package is not published yet.** Until it is, install it from a local
-checkout by adding one key to your project's `opencode.json` - merge it into
-the file, do not replace the file:
+Add one key to your project's `opencode.json` - merge it into the file, do not
+replace the file:
 
 ```json
 {
-  "plugin": ["file:/absolute/path/to/opencode-fable-method"]
+  "plugin": ["opencode-fable-method@git+https://github.com/attawitcto/opencode-fable-method.git"]
 }
 ```
 
-A `file:` path is machine-specific, so use it for your own checkout and never
-commit it to a shared repository.
+This form is machine-independent, so it is the one to commit to a shared
+repository. Pin a tag or commit by appending `#<ref>` to the URL; without one
+every install tracks the default branch.
 
 > **Check your existing `permission` block first.** If it contains a
 > catch-all - `"permission": { "*": "ask" }` or `"deny"` - that rule applies
@@ -33,28 +33,26 @@ commit it to a shared repository.
 > keeping only the specific rules you actually want stricter. `/fable-doctor`
 > reports this as a blocking problem.
 
-Once the package is published, install becomes one command:
+Restart OpenCode afterwards - config is read once at startup and is not
+hot-reloaded.
 
-```bash
-opencode plugin opencode-fable-method
-```
-
-or, added by hand and pinned to a version:
+**Working on the plugin itself?** Point it at your checkout instead. A `file:`
+path is machine-specific, so keep it out of any shared config:
 
 ```json
 {
-  "plugin": ["opencode-fable-method@0.1.0"]
+  "plugin": ["file:/absolute/path/to/opencode-fable-method"]
 }
 ```
 
-Either way, restart OpenCode afterwards - config is read once at startup and
-is not hot-reloaded.
+The package is not on npm, so `opencode plugin opencode-fable-method` and a
+bare `"opencode-fable-method@0.1.0"` entry do not resolve.
 
 To prompt on every commit and deny PR creation outright, pass the strict profile:
 
 ```json
 {
-  "plugin": [["file:/absolute/path/to/opencode-fable-method", { "permissionProfile": "strict" }]]
+  "plugin": [["opencode-fable-method@git+https://github.com/attawitcto/opencode-fable-method.git", { "permissionProfile": "strict" }]]
 }
 ```
 
@@ -84,9 +82,13 @@ commands and reads no files - so it is instant and cannot drift from reality.
 Run it from the shell, in the project you want reported on:
 
 ```bash
-npx fable-doctor            # or: node <package>/bin/doctor.js
-npx fable-doctor --strict   # if you installed with permissionProfile: strict
+node "$(ls -d ~/.cache/opencode/packages/opencode-fable-method*/*/*/*/node_modules/opencode-fable-method)/bin/doctor.js"
+node <checkout>/bin/doctor.js --strict   # if you installed with permissionProfile: strict
 ```
+
+`npx fable-doctor` needs the package on npm, which it is not; the `bin` entry
+resolves only from a checkout or from OpenCode's own package cache, which the
+first line locates.
 
 The `--strict` flag is needed because the profile you passed to the plugin is
 not recoverable from the resolved config; the report prints which one it
