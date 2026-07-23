@@ -751,3 +751,37 @@ than left to look like a pending task someone forgot.
 Until it is run, nothing should claim this plugin fans out evidence gathering.
 The `TWINS:` line is what actually produced the sweep on this fixture, in the
 main thread, and that claim is measured.
+
+## Round P10 - `/fable-judge suite` does not run here (2026-07-23)
+
+Smoke, n=2, scoped to one scenario to bound the cost. Both attempts returned
+**zero bytes** before their watchdogs (900s, then 700s). The same bed and the
+same `--command fable-judge` with an ordinary prompt returned a verdict in
+seconds, so this is reproducible and specific to the suite prompt, not a stall
+and not the command.
+
+Three defects were visible before any model was involved, and any one of them is
+enough on its own:
+
+1. **The `/fable-judge` command template never mentions suite mode.** It
+   hardcodes "Review the most recent completed work", so `suite <target>` in the
+   user input contradicts the command's own instruction.
+2. **`eval/workflow.js` carries no tasks.** The skill sends suite mode there for
+   "tasks and ground truths"; it is a stub, with `BASE = 'REPLACE/WITH/SCRATCH/DIR/eval'`
+   and empty function bodies. The task lines actually live in `eval/README.md`
+   and `eval/cases/`.
+3. **It targets a tool OpenCode does not have.** `workflow.js` says in its own
+   header that it is a Claude Code Workflow script, to be run by invoking the
+   `Workflow` tool. There is no such tool in OpenCode.
+
+So suite mode is upstream's, written for upstream's harness, and was never
+adapted when the method was ported here. Marked unsupported in the skill rather
+than deleted, because the section is shared with upstream where the harness
+exists; deleting it would break parity to fix a claim, and a caveat fixes the
+claim directly. `eval/run-*.sh` already does this job with a shell runner.
+
+What the two runs cannot separate is "the harness hangs" from "the model spins
+silently for over ten minutes", because a run killed with `-9` may never flush
+its session row, so the absence of a session in the store is not proof it never
+started. Not worth more spend: both readings give the same answer to the only
+question asked, which is whether the command works.

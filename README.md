@@ -251,7 +251,7 @@ provenances never blur. `eval/scenarios-plugin/` holds the two fixtures written
 here; `eval/run-*.sh` are the runners. Executor was MiniMax-M3, not upstream's
 Haiku, so none of these numbers is comparable to `RESULTS.md`.
 
-Eight rounds, and the honest summary is that the method carries the result, this
+Nine rounds, and the honest summary is that the method carries the result, this
 fork's added rules do not measurably improve it, and this fork's *delivery* was
 where the real defects were:
 
@@ -265,6 +265,7 @@ where the real defects were:
 | P6 | `s7` | `/fable-judge` **deadlocked as shipped**; 2 of 2 REFUTED after a one-line fix |
 | P7 | `s5`, `s7` | `/fable-plan` and `/fable-judge` **let an unconstrained parent act**; 2 of 2 clean each after dropping `subtask` |
 | P9 | `s13` | the `evidence` subagent **never fires**, 0 of 2; `/fable` deleted as a duplicate |
+| P10 | - | `/fable-judge suite` **does not run in OpenCode**; marked unsupported |
 
 P4 is the one real gap, and P5 explains it: `p1` carries upstream's
 spec-versus-test trap, and removing that trap closes the gap entirely. The lift
