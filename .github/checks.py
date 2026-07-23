@@ -118,7 +118,10 @@ const loose = []
 for (const profile of [{ commit: 'allow', strict: false }, { commit: 'ask', strict: true }]) {
   const proj = projectPermission(profile)
   for (const [name, agent] of Object.entries(AGENTS())) {
-    if (agent.mode !== 'subagent') continue
+    // `fable-judge` is mode `all` so it can hold the session, but `fable`
+    // still dispatches it as a subagent - the hang applies to it too. Only
+    // the primary is exempt: its asks reach a real prompt.
+    if (agent.mode === 'primary') continue
     for (const [key, pv] of Object.entries(proj)) {
       const av = agent.permission?.[key]
       if (typeof pv === 'string' || typeof av === 'string') {
